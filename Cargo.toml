@@ -1,0 +1,6 @@
+[package]
+name = "chip16"
+version = "0.1.0"
+authors = ["Scott Moore <scott.will.moore@gmail.com>"]
+
+[dependencies]
