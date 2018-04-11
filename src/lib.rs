@@ -92,7 +92,7 @@ enum Instruction {
 }
 
 impl Instruction {
-    fn decode(opcode: u32) -> Result<Instruction, Err> {
+    fn decode(opcode: u32) -> Result<Instruction, &'static str> {
         let b3 = (opcode & 0xFF000000 >> 24) as u8;
 
         match b3 {
