@@ -1,5 +1,6 @@
 // TODO: create flags type: for easy decoding, encoding of flags
 // TODO: create separate memory type: for safe, convinient access of memory
+use std::fmt;
 
 enum Instruction {
     NOP,
@@ -98,6 +99,12 @@ impl Instruction {
         match b3 {
             _ => Err(""),
         }
+    }
+}
+
+impl fmt::Display for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "")
     }
 }
 
