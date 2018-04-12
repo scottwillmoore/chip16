@@ -1,3 +1,5 @@
+use instruction::Instruction;
+
 #[derive(Default)]
 struct Cpu {
     m: Vec<u8>,
