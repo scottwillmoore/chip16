@@ -94,9 +94,110 @@ enum Instruction {
 
 impl Instruction {
     fn decode(opcode: u32) -> Result<Instruction, &'static str> {
+        use Instruction::*;
+
         let b3 = (opcode & 0xFF000000 >> 24) as u8;
 
         match b3 {
+            0x00 => Ok(NOP),
+            0x01 => Ok(CLS),
+            0x02 => Ok(VBLNK),
+            0x03 => Ok(BGC),
+            0x04 => Ok(SPR),
+            0x05 => Ok(DRW0),
+            0x06 => Ok(DRW1),
+            0x07 => Ok(RND),
+            // 0x08 => Ok(FLIP0),
+            0x09 => Ok(SND0),
+            0x0A => Ok(SND1),
+            0x0B => Ok(SND2),
+            0x0C => Ok(SND3),
+            0x0D => Ok(SNP),
+            0x0E => Ok(SNG),
+
+            0x10 => Ok(JMP0),
+            0x11 => Ok(JMC),
+            0x12 => Ok(JX),
+            0x13 => Ok(JME),
+            0x14 => Ok(CALL0),
+            0x15 => Ok(RET),
+            0x16 => Ok(JMP1),
+            0x17 => Ok(CX),
+            0x18 => Ok(CALL1),
+
+            0x20 => Ok(LDI0),
+            0x21 => Ok(LDI1),
+            0x22 => Ok(LDM0),
+            0x23 => Ok(LDM1),
+            0x24 => Ok(MOV),
+
+            0x30 => Ok(STM0),
+            0x31 => Ok(STM1),
+
+            0x40 => Ok(ADDI),
+            0x41 => Ok(ADD0),
+            0x42 => Ok(ADD1),
+
+            0x50 => Ok(SUBI),
+            0x51 => Ok(SUB0),
+            0x52 => Ok(SUB1),
+            0x53 => Ok(CMPI),
+            0x54 => Ok(CMP),
+
+            0x60 => Ok(ANDI),
+            0x61 => Ok(AND0),
+            0x62 => Ok(AND1),
+            0x63 => Ok(TSTI),
+            0x64 => Ok(TST),
+
+            0x70 => Ok(ORI),
+            0x71 => Ok(OR0),
+            0x72 => Ok(OR1),
+
+            0x80 => Ok(XORI),
+            0x81 => Ok(XOR0),
+            0x82 => Ok(XOR1),
+
+            0x90 => Ok(MULI),
+            0x91 => Ok(MUL0),
+            0x92 => Ok(MUL1),
+
+            0xA0 => Ok(DIVI),
+            0xA1 => Ok(DIV0),
+            0xA2 => Ok(DIV1),
+            0xA3 => Ok(MODI),
+            0xA4 => Ok(MOD0),
+            0xA5 => Ok(MOD1),
+            0xA6 => Ok(REMI),
+            0xA7 => Ok(REM0),
+            0xA8 => Ok(REM1),
+
+            0xB0 => Ok(SHL0),
+            0xB1 => Ok(SHR0),
+            // 0xB0 => Ok(SAL0),
+            0xB2 => Ok(SAR0),
+            0xB3 => Ok(SHL1),
+            0xB4 => Ok(SHR1),
+            // 0xB3 => Ok(SHL1),
+            0xB5 => Ok(SAR1),
+
+            0xC0 => Ok(PUSH),
+            0xC1 => Ok(POP),
+            0xC2 => Ok(PUSHALL),
+            0xC3 => Ok(POPALL),
+            0xC4 => Ok(PUSHF),
+            0xC5 => Ok(POPF),
+
+            0xD0 => Ok(PAL0),
+            0xD1 => Ok(PAL1),
+
+            0xE0 => Ok(NOTI),
+            0xE1 => Ok(NOT0),
+            0xE2 => Ok(NOT1),
+            0xE3 => Ok(NEGI),
+            0xE4 => Ok(NEG0),
+            0xE5 => Ok(NEG1),
+
             _ => Err(""),
         }
     }
@@ -158,25 +259,13 @@ impl Cpu {
         );
 
         // Decode the instruction.
-        match b3 {
-            0x00 => {}
-            0x01 => {}
-            0x02 => {}
-            0x03 => {}
-            0x04 => {}
-            0x05 => {}
-            0x06 => {}
-            0x07 => {}
-            0x08 => {}
-            0x09 => {}
-            0x0A => {}
-            0x0B => {}
-            0x0C => {}
-            0x0D => {}
-            0x0E => {}
+        match instruction {
+            NOP => {}
             _ => {}
         };
     }
+
+    fn execute(&self, instruction: &Instruction) {}
 }
 
 #[cfg(test)]
