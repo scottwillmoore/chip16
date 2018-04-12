@@ -2,6 +2,47 @@
 // TODO: create separate memory type: for safe, convinient access of memory
 use std::fmt;
 
+struct Opcode {
+    h: u8;
+    l: u8;
+    n: u8;
+    x: u8;
+    y: u8;
+    z: u8;
+}
+
+impl Opcode {
+    fn decode(opcode: u32) -> Opcode {
+        // Decompose the instruction into bytes.
+        let (b3, b2, b1, b0) = (
+            (opcode & 0xFF000000 >> 0x18) as u8,
+            (opcode & 0x00FF0000 >> 0x10) as u8,
+            (opcode & 0x0000FF00 >> 0x08) as u8,
+            (opcode & 0x000000FF) as u8,
+        );
+
+        // Decompose the instruction into nibbles.
+        let (n7, n6, n5, n4, n3, n2, n1, n0) = (
+            b0 & 0x0F,
+            b0 & 0xF0,
+            b1 & 0x0F,
+            b1 & 0xF0,
+            b2 & 0x0F,
+            b2 & 0xF0,
+            b3 & 0x0F,
+            b3 & 0xF0,
+        );
+
+        Opcode {
+            h: (opcode & 0x000000FF) as u8,
+            l: (opcode & 0x0000FF00 >> 0x08) as u8,
+            x: (opcode & 0x000F0000 >> 0x10) as u8,
+            y: (opcode & 0x00F00000 >> 0x14) as u8,
+            z: (opcode & 0x0000F000 >> 0x0B) as u8,
+        }
+    }
+}
+
 enum Instruction {
     NOP,
     CLS,
