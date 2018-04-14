@@ -23,37 +23,27 @@ impl Cpu {
         }
     }
 
+    fn fetch(&self) -> u32 {
+        0 as u32
+    }
+
     fn step(&self) {
-        let opcode = 0 as u32;
-        let instruction = Instruction::decode(opcode);
+        let opcode = self.fetch();
+        let instruction = Instruction::new(opcode).expect("Instruction not found.");
 
-        // Decompose the instruction into bytes.
-        let (b3, b2, b1, b0) = (
-            (opcode & 0xFF000000 >> 0x18) as u8,
-            (opcode & 0x00FF0000 >> 0x10) as u8,
-            (opcode & 0x0000FF00 >> 0x08) as u8,
-            (opcode & 0x000000FF) as u8,
-        );
+        let h = (opcode & 0x000000FF >> 00) as u8;
+        let l = (opcode & 0x0000FF00 >> 08) as u8;
+        let z = (opcode & 0x00000F00 >> 12) as u8;
+        let x = (opcode & 0x000F0000 >> 16) as u8;
+        let y = (opcode & 0x00F00000 >> 20) as u8;
 
-        // Decompose the instruction into nibbles.
-        let (n7, n6, n5, n4, n3, n2, n1, n0) = (
-            b0 & 0x0F,
-            b0 & 0xF0,
-            b1 & 0x0F,
-            b1 & 0xF0,
-            b2 & 0x0F,
-            b2 & 0xF0,
-            b3 & 0x0F,
-            b3 & 0xF0,
-        );
+        self.execute(&instruction);
+    }
 
-        // Decode the instruction.
+    fn execute(&self, instruction: &Instruction) {
         match instruction {
-            NOP => {}
+            Instruction::NOP => {}
             _ => {}
         };
     }
-
-    fn execute(&self, instruction: &Instruction) {}
 }
-
