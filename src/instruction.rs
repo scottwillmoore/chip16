@@ -1,18 +1,25 @@
-// Instruction abbreviations.
-// hh: 00 00 00 HH
-// vt: 00 00 00 VT
-// ll: 00 00 LL 00
-// sr: 00 00 SR 00
-// ad: 00 AD 00 00
-// n:  00 00 N0 00
-// z:  00 00 Z0 00
-// c:  00 0x 00 00
-// x:  00 0X 00 00
-// y:  00 Y0 00 00
+// TODO: Add documentation for each instruction.
+// TODO: Implement fmt method for branch and instruction enums.
 
-// Setting flags.
+use std::fmt;
 
-// Conditional branch types.
+pub enum Branch {
+    Z,
+    NZ,
+    N,
+    NN,
+    P,
+    O,
+    NO,
+    A,
+    AE,
+    B,
+    BE,
+    G,
+    GE,
+    L,
+    LE,
+}
 
 pub enum Instruction {
     NOP,
@@ -100,12 +107,12 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn new(opcode: u32) -> Result<Instruction, &'static str> {
+    pub fn from_opcode(opcode: u32) -> Result<Instruction, &'static str> {
         // Deconstrct opcode into bytes and nibbles.
         // b3 b2 b1 b0
-        let (b3, b2, b1, b0) = Instruction::bytes(opcode);
+        let (b3, b2, b1, b0) = Instruction::opcode_to_bytes(opcode);
         // n7n6 n5n4 n3n2 n1n0
-        let (_, _, n5, n4, n3, _, _, n0) = Instruction::nibbles(opcode);
+        let (_, _, n5, n4, n3, _, _, n0) = Instruction::opcode_to_nibbles(opcode);
 
         // Bind instruction abbreviations.
         // hh: 00 00 00 HH
@@ -249,7 +256,7 @@ impl Instruction {
         ""
     }
 
-    fn bytes(opcode: u32) -> (u8, u8, u8, u8) {
+    fn opcode_to_bytes(opcode: u32) -> (u8, u8, u8, u8) {
         (
             (opcode & 0xFF000000 >> 0x18) as u8,
             (opcode & 0x00FF0000 >> 0x10) as u8,
@@ -258,7 +265,7 @@ impl Instruction {
         )
     }
 
-    fn nibbles(opcode: u32) -> (u8, u8, u8, u8, u8, u8, u8, u8) {
+    fn opcode_to_nibbles(opcode: u32) -> (u8, u8, u8, u8, u8, u8, u8, u8) {
         (
             (opcode & 0xF0000000 >> 0x1B) as u8,
             (opcode & 0x0F000000 >> 0x18) as u8,
@@ -269,5 +276,12 @@ impl Instruction {
             (opcode & 0x000000F0 >> 0x04) as u8,
             (opcode & 0x0000000F) as u8,
         )
+    }
+}
+
+impl fmt::Display for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // TODO: Implement fmt for Instruction.
+        Ok(())
     }
 }

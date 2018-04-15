@@ -29,13 +29,7 @@ impl Cpu {
 
     fn step(&self) {
         let opcode = self.fetch();
-        let instruction = Instruction::new(opcode).expect("Instruction not found.");
-
-        let h = (opcode & 0x000000FF >> 00) as u8;
-        let l = (opcode & 0x0000FF00 >> 08) as u8;
-        let z = (opcode & 0x00000F00 >> 12) as u8;
-        let x = (opcode & 0x000F0000 >> 16) as u8;
-        let y = (opcode & 0x00F00000 >> 20) as u8;
+        let instruction = Instruction::from_opcode(opcode).expect("Instruction not found.");
 
         self.execute(&instruction);
     }
