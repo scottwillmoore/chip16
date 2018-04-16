@@ -60,7 +60,7 @@ pub enum Instruction {
     SUBR2 { y: u8, x: u8 },
     SUBR3 { y: u8, x: u8, z: u8 },
     CMPI { x: u8, ll: u8, hh: u8 },
-    CMP { y: u8, x: u8 },
+    CMPR { y: u8, x: u8 },
     ANDI { x: u8, ll: u8, hh: u8 },
     ANDR2 { y: u8, x: u8 },
     ANDR3 { y: u8, x: u8, z: u8 },
@@ -109,9 +109,7 @@ pub enum Instruction {
 impl Instruction {
     pub fn from_opcode(opcode: u32) -> Result<Instruction, &'static str> {
         // Deconstrct opcode into bytes and nibbles.
-        // b3 b2 b1 b0
         let (b3, b2, b1, b0) = Instruction::opcode_to_bytes(opcode);
-        // n7n6 n5n4 n3n2 n1n0
         let (_, _, n5, n4, n3, _, _, n0) = Instruction::opcode_to_nibbles(opcode);
 
         // Bind instruction abbreviations.
@@ -191,7 +189,7 @@ impl Instruction {
             0x51 => Ok(Instruction::SUBR2 { y, x }),
             0x52 => Ok(Instruction::SUBR3 { y, x, z }),
             0x53 => Ok(Instruction::CMPI { x, ll, hh }),
-            // 0x54 => Ok(Instruction::CMP { y, x }), CMPR? TODO!
+            0x54 => Ok(Instruction::CMPR { y, x }),
             0x60 => Ok(Instruction::ANDI { x, ll, hh }),
             0x61 => Ok(Instruction::ANDR2 { y, x }),
             0x62 => Ok(Instruction::ANDR3 { y, x, z }),
