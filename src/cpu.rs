@@ -1,3 +1,5 @@
+use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
+
 use instruction::Instruction;
 
 #[derive(Default)]
@@ -27,46 +29,6 @@ struct Color {
 }
 
 #[derive(Default)]
-struct Memory {
-    m: Vec<u8>,
-}
-
-trait Set<T, U> {
-    fn set(&mut self, index: T) -> &mut U;
-}
-
-// u8 -> u16
-// u16
-
-impl Set<u8, u8> for Memory {
-    fn set(&mut self, index: u8) -> &mut u8 {
-        &mut self.m[0]
-    }
-}
-
-// impl Set<u8, u16> for Memory {
-//     fn set(&mut self, index: u8) -> &mut u16 {
-//         &mut self.m[0]
-//     }
-// }
-
-impl Memory {
-    fn test(&mut self) {
-        // let r = self.set(0);
-        // *r = 0u8;
-        *self.set(0) = 0u8;
-        // THIS DOESN'T WORK FOR u16, because we can't return a mutable reference with a Vec<u8>...
-        // self.set(0, 0u16) <- This will work however... At the cost of being ugly?
-        // TODO: Investigate more elegant, but safe methods of addressing memory with u8 and u16.
-    }
-    // fn set<T, U>(&mut self, value: T) -> U
-    // where
-    //     T: ,
-    // {
-    // }
-}
-
-#[derive(Default)]
 struct Cpu {
     m: Vec<u8>,
     r: [u16; 16],
@@ -90,6 +52,10 @@ struct Cpu {
 // TODO: Create a Memory struct for getting, setting memory.
 // e.g. Indexing with u8, u16, multiple u8.
 // e.g. Extracting u16.
+
+fn read_u16(a: u8, b: u8) -> u16 {
+    (a as u16) & ((b as u16) << 0x8)
+}
 
 impl Cpu {
     fn new() -> Cpu {
@@ -160,7 +126,9 @@ impl Cpu {
                 // TODO
             }
             Instruction::JMPI { ll, hh } => {
-                self.pc = (ll as u16) & ((hh as u16) << 0x8);
+                // self.pc = LittleEndian::read_u16(&[ll, hh]);
+                self.pc = read_u16(ll, hh);
+                // self.pc = (ll as u16) & ((hh as u16) << 0x8);
             }
             Instruction::JMC { ll, hh } => {
                 // TODO
@@ -197,28 +165,35 @@ impl Cpu {
             }
             Instruction::RET => {
                 self.sp -= 2;
+                // self.pc = self.m.get(self.sp)
                 self.pc = (self.m[self.sp as usize] as u16)
                     & ((self.m[(self.sp + 1) as usize] as u16) << 0x8);
             }
             Instruction::JMPR { x } => {
+                // NOTE: This is supposed to be [x] not x.
                 self.pc = x as u16;
             }
             Instruction::CX { x, ll, hh } => {
                 // TODO
             }
             Instruction::CALLR { x } => {
+                // self.set(self.sp, self.pc)
                 self.m[self.sp as usize] = (self.pc & 0x00FF) as u8;
                 self.m[(self.sp + 1) as usize] = (self.pc & 0xFF00 >> 0x8) as u8;
                 self.sp += 2;
+                // self.pc = self.r.get(x)
                 self.pc = self.r[x as usize];
             }
             Instruction::LDIR { x, ll, hh } => {
+                // self.r.set(x, to_u16(ll, hh))
                 self.r[x as usize] = (ll as u16) & ((hh as u16) << 0x8);
             }
             Instruction::LDIS { ll, hh } => {
+                // self.sp = to_u16(ll, hh)
                 self.sp = (ll as u16) & ((hh as u16) << 0x8);
             }
             Instruction::LDMI { x, ll, hh } => {
+                // self.m.set(to_u16(ll, hh), self.r.get(x))
                 self.m[ll as usize] = (self.r[x as usize] & 0x00FF) as u8;
                 self.m[hh as usize] = (self.r[x as usize] & 0xFF00 >> 0x8) as u8;
             }

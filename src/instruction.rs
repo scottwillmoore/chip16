@@ -135,6 +135,7 @@ impl Instruction {
         let y = n5;
 
         // Decode the opcode into an instruction.
+        #[cfg_attr(rustfmt, rustfmt_skip)]
         match b3 {
             0x00 => Ok(Instruction::NOP),
             0x01 => Ok(Instruction::CLS),
@@ -144,19 +145,10 @@ impl Instruction {
             0x05 => Ok(Instruction::DRWI { y, x, ll, hh }),
             0x06 => Ok(Instruction::DRWR { y, x, z }),
             0x07 => Ok(Instruction::RND { x, ll, hh }),
-            0x08 if n0 == 0u8 => Ok(Instruction::FLIP {
-                fh: false,
-                fv: false,
-            }),
-            0x08 if n0 == 1u8 => Ok(Instruction::FLIP {
-                fh: false,
-                fv: true,
-            }),
-            0x08 if n0 == 2u8 => Ok(Instruction::FLIP {
-                fh: true,
-                fv: false,
-            }),
-            0x08 if n0 == 3u8 => Ok(Instruction::FLIP { fh: true, fv: true }),
+            0x08 if n0 == 0 => Ok(Instruction::FLIP { fh: false, fv: false }),
+            0x08 if n0 == 1 => Ok(Instruction::FLIP { fh: false, fv: true }),
+            0x08 if n0 == 2 => Ok(Instruction::FLIP { fh: true, fv: false }),
+            0x08 if n0 == 3 => Ok(Instruction::FLIP { fh: true, fv: true }),
             0x09 => Ok(Instruction::SND0),
             0x0A => Ok(Instruction::SND1 { ll, hh }),
             0x0B => Ok(Instruction::SND2 { ll, hh }),
