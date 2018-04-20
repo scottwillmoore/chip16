@@ -1,4 +1,4 @@
-use instruction::Instruction;
+use instruction::{Condition, Instruction};
 
 #[derive(Default)]
 struct Flags {
@@ -112,7 +112,7 @@ impl Cpu {
                 self.pc = hhll;
             }
             Instruction::JMC { hhll } => {}
-            Instruction::JX { x, hhll } => {}
+            Instruction::JX { ref c, hhll } => {}
             Instruction::JME { y, x, hhll } => {
                 if self.r[x as usize] == self.r[y as usize] {
                     self.pc = hhll;
@@ -130,7 +130,7 @@ impl Cpu {
             Instruction::JMPR { x } => {
                 self.pc = self.m.read_u16(x as usize);
             }
-            Instruction::CX { x, hhll } => {}
+            Instruction::CX { ref c, hhll } => {}
             Instruction::CALLR { x } => {
                 self.m.write_u16(self.sp as usize, self.pc);
                 self.sp += 2;

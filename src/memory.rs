@@ -15,15 +15,17 @@ impl Memory for Vec<u8> {}
 // SOLUTION: Implement a trait which allows easier indexing into registers, memory.
 // SOLUTION: Create a new Memory struct which allows indexing by u16.
 // SOLUTION: Create a new Registers struct which allows indexing by u8.
-// SOLUTION: Suck it up, it is a very simple cast to perform.
+// SOLUTION (CHOSEN): Suck it up, it is a very simple cast to perform.
 
 // A u16 needs to be written to memory (e.g. to write the pc into memory).
+// A u16 needs to be read from memory (e.g. to write a register into memory).
 // ---
-// SOLUTION: Implement a trait which allows easier writing into memory.
+// SOLUTION (CHOSEN): Implement a trait which allows easier reading, writing into memory.
+//           e.g. mem.read_u16(), mem.write_u16()
 
 // Two u8's need to be converted into a u16 (e.g. to convert hh and ll into hhll).
 // --
-// SOLUTION (CHOSEN): Eliminate situations that create this problem.
+// SOLUTION (CHOSEN):   Eliminate situations that create this problem.
 //           Modify the Instruction enum to accept a u16 instead.
 //           This would require tweaking the Instruction definitions, may not always work.
 // SOLUTION: Create a function to convert two u8's into a u16.

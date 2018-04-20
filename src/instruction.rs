@@ -1,9 +1,6 @@
-// TODO: Add documentation for each instruction.
-// TODO: Implement fmt method for branch and instruction enums.
-
 use std::fmt;
 
-pub enum Branch {
+pub enum Condition {
     Z,
     NZ,
     N,
@@ -21,12 +18,35 @@ pub enum Branch {
     LE,
 }
 
+impl Condition {
+    pub fn decode(x: u8) -> Result<Condition, &'static str> {
+        match x {
+            0x0 => Ok(Condition::Z),
+            0x1 => Ok(Condition::NZ),
+            0x2 => Ok(Condition::N),
+            0x3 => Ok(Condition::NN),
+            0x4 => Ok(Condition::P),
+            0x5 => Ok(Condition::O),
+            0x6 => Ok(Condition::NO),
+            0x7 => Ok(Condition::A),
+            0x8 => Ok(Condition::AE),
+            0x9 => Ok(Condition::B),
+            0xA => Ok(Condition::BE),
+            0xB => Ok(Condition::G),
+            0xC => Ok(Condition::GE),
+            0xD => Ok(Condition::L),
+            0xE => Ok(Condition::LE),
+            _ => Err(""),
+        }
+    }
+}
+
 pub enum Instruction {
     NOP,
     CLS,
     VBLNK,
     BGC { n: u8 },
-    SPR { hhll: u16 },
+    SPR { ll: u8, hh: u8 },
     DRWI { y: u8, x: u8, hhll: u16 },
     DRWR { y: u8, x: u8, z: u8 },
     RND { x: u8, hhll: u16 },
@@ -39,12 +59,12 @@ pub enum Instruction {
     SNG { ad: u8, sr: u8, vt: u8 },
     JMPI { hhll: u16 },
     JMC { hhll: u16 },
-    JX { x: u8, hhll: u16 },
+    JX { c: Condition, hhll: u16 },
     JME { y: u8, x: u8, hhll: u16 },
     CALLI { hhll: u16 },
     RET,
     JMPR { x: u8 },
-    CX { x: u8, hhll: u16 },
+    CX { c: Condition, hhll: u16 },
     CALLR { x: u8 },
     LDIR { x: u8, hhll: u16 },
     LDIS { hhll: u16 },
@@ -107,17 +127,21 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn from_opcode(opcode: u32) -> Result<Instruction, &'static str> {
+    pub fn decode(opcode: u32) -> Result<Instruction, &'static str> {
         // Deconstrct opcode into bytes and nibbles.
         let (_, w0) = Instruction::opcode_to_words(opcode);
         let (b3, b2, b1, b0) = Instruction::opcode_to_bytes(opcode);
         let (_, _, n5, n4, n3, _, _, n0) = Instruction::opcode_to_nibbles(opcode);
 
         // Bind instruction abbreviations.
-        // hhll: 00 00 00 HH
+        // hhll: 00 00 HH LL
         let hhll = w0;
+        // hh: 00 00 00 LL
+        let hh = b0;
         // vt: 00 00 00 VT
         let vt = b0;
+        // ll: 00 00 LL 00
+        let ll = b1;
         // sr: 00 00 SR 00
         let sr = b1;
         // ad: 00 AD 00 00
@@ -132,6 +156,8 @@ impl Instruction {
         let x = n4;
         // y:  00 Y0 00 00
         let y = n5;
+        // c:  Condition
+        let c = Condition::decode(x).unwrap();
 
         // Decode the opcode into an instruction.
         #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -140,7 +166,7 @@ impl Instruction {
             0x01 => Ok(Instruction::CLS),
             0x02 => Ok(Instruction::VBLNK),
             0x03 => Ok(Instruction::BGC { n }),
-            0x04 => Ok(Instruction::SPR { hhll }),
+            0x04 => Ok(Instruction::SPR { ll, hh }),
             0x05 => Ok(Instruction::DRWI { y, x, hhll }),
             0x06 => Ok(Instruction::DRWR { y, x, z }),
             0x07 => Ok(Instruction::RND { x, hhll }),
@@ -156,12 +182,12 @@ impl Instruction {
             0x0E => Ok(Instruction::SNG { ad, sr, vt }),
             0x10 => Ok(Instruction::JMPI { hhll }),
             0x11 => Ok(Instruction::JMC { hhll }),
-            0x12 => Ok(Instruction::JX { x, hhll }),
+            0x12 => Ok(Instruction::JX { c, hhll }),
             0x13 => Ok(Instruction::JME { y, x, hhll }),
             0x14 => Ok(Instruction::CALLI { hhll }),
             0x15 => Ok(Instruction::RET),
             0x16 => Ok(Instruction::JMPR { x }),
-            0x17 => Ok(Instruction::CX { x, hhll }),
+            0x17 => Ok(Instruction::CX { c, hhll }),
             0x18 => Ok(Instruction::CALLR { x }),
             0x20 => Ok(Instruction::LDIR { x, hhll }),
             0x21 => Ok(Instruction::LDIS { hhll }),
@@ -221,7 +247,6 @@ impl Instruction {
             0xE3 => Ok(Instruction::NEGI { x, hhll }),
             0xE4 => Ok(Instruction::NEGR1 { x }),
             0xE5 => Ok(Instruction::NEGR2 { y, x }),
-
             _ => Err(""),
         }
     }
