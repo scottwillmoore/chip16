@@ -23,7 +23,7 @@ impl Memory for Vec<u8> {}
 
 // Two u8's need to be converted into a u16 (e.g. to convert hh and ll into hhll).
 // --
-// SOLUTION: Eliminate situations that create this problem.
+// SOLUTION (CHOSEN): Eliminate situations that create this problem.
 //           Modify the Instruction enum to accept a u16 instead.
 //           This would require tweaking the Instruction definitions, may not always work.
 // SOLUTION: Create a function to convert two u8's into a u16.

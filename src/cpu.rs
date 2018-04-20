@@ -90,17 +90,17 @@ impl Cpu {
             Instruction::BGC { n } => {
                 self.bg = n;
             }
-            Instruction::SPR { ll, hh } => {
+            Instruction::SPR { hhll } => {
                 self.sw = ll;
                 self.sh = hh;
             }
-            Instruction::DRWI { y, x, ll, hh } => {
+            Instruction::DRWI { y, x, hhll } => {
                 // TODO
             }
             Instruction::DRWR { y, x, z } => {
                 // TODO
             }
-            Instruction::RND { x, ll, hh } => {
+            Instruction::RND { x, hhll } => {
                 // TODO
             }
             Instruction::FLIP { fh, fv } => {
@@ -110,58 +110,47 @@ impl Cpu {
             Instruction::SND0 {} => {
                 // TODO
             }
-            Instruction::SND1 { ll, hh } => {
+            Instruction::SND1 { hhll } => {
                 //TODO
             }
-            Instruction::SND2 { ll, hh } => {
+            Instruction::SND2 { hhll } => {
                 // TODO
             }
-            Instruction::SND3 { ll, hh } => {
+            Instruction::SND3 { hhll } => {
                 // TODO
             }
-            Instruction::SNP { x, ll, hh } => {
+            Instruction::SNP { x, hhll } => {
                 // TODO
             }
             Instruction::SNG { ad, sr, vt } => {
                 // TODO
             }
-            Instruction::JMPI { ll, hh } => {
-                // self.pc = LittleEndian::read_u16(&[ll, hh]);
-                self.pc = read_u16(ll, hh);
+            Instruction::JMPI { hhll } => {
+                // self.pc = LittleEndian::read_u16(&[hhll]);
                 // self.pc = (ll as u16) & ((hh as u16) << 0x8);
+                self.pc = hhll;
             }
-            Instruction::JMC { ll, hh } => {
+            Instruction::JMC { hhll } => {
                 // TODO
             }
-            Instruction::JX { x, ll, hh } => {
+            Instruction::JX { x, hhll } => {
                 // TODO
             }
-            Instruction::JME { y, x, ll, hh } => {
+            Instruction::JME { y, x, hhll } => {
                 // self.r.set(x, self.r.get(y))
                 // self.r[x] = self.r[y] -> custom Index<u8>
                 if self.r[x as usize] == self.r[y as usize] {
-                    // self.pc = to_u16(ll, hh)
-                    self.pc = (ll as u16) & (hh as u16) << 0x8;
+                    self.pc = hhll;
                 }
             }
-            Instruction::CALLI { ll, hh } => {
+            Instruction::CALLI { hhll } => {
                 let sp = self.sp as usize;
                 // self.memory.set(self.sp, self.pc)
                 // self.memory.set(self.sp, self.pc)
                 self.m[sp] = (self.pc & 0x00FF) as u8;
                 self.m[sp + 1] = (self.pc & 0xFF00 >> 0x8) as u8;
-
                 self.sp += 2;
-
-                let ll = ll as u16;
-                let hh = hh as u16;
-                // self.pc = to_u16(ll, hh)
-                self.pc = ll & (hh << 0x8);
-
-                // self.m[self.sp as usize] = (self.pc & 0x00FF) as u8;
-                // self.m[(self.sp + 1) as usize] = (self.pc & 0xFF00 >> 0x8) as u8;
-                // self.sp += 2;
-                // self.pc = (ll as u16) & ((hh as u16) << 0x8);
+                self.pc = hhll;
             }
             Instruction::RET => {
                 self.sp -= 2;
@@ -173,7 +162,7 @@ impl Cpu {
                 // NOTE: This is supposed to be [x] not x.
                 self.pc = x as u16;
             }
-            Instruction::CX { x, ll, hh } => {
+            Instruction::CX { x, hhll } => {
                 // TODO
             }
             Instruction::CALLR { x } => {
@@ -184,18 +173,14 @@ impl Cpu {
                 // self.pc = self.r.get(x)
                 self.pc = self.r[x as usize];
             }
-            Instruction::LDIR { x, ll, hh } => {
-                // self.r.set(x, to_u16(ll, hh))
-                self.r[x as usize] = (ll as u16) & ((hh as u16) << 0x8);
+            Instruction::LDIR { x, hhll } => {
+                self.r[x as usize] = hhll;
             }
-            Instruction::LDIS { ll, hh } => {
-                // self.sp = to_u16(ll, hh)
-                self.sp = (ll as u16) & ((hh as u16) << 0x8);
+            Instruction::LDIS { hhll } => {
+                self.sp = hhll;
             }
-            Instruction::LDMI { x, ll, hh } => {
-                // self.m.set(to_u16(ll, hh), self.r.get(x))
-                self.m[ll as usize] = (self.r[x as usize] & 0x00FF) as u8;
-                self.m[hh as usize] = (self.r[x as usize] & 0xFF00 >> 0x8) as u8;
+            Instruction::LDMI { x, hhll } => {
+                // self.m[hhll as usize] = self.r[x as usize];
             }
             Instruction::LDMR { y, x } => {
                 self.r[x as usize] =
