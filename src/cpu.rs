@@ -1,5 +1,3 @@
-use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
-
 use instruction::Instruction;
 
 #[derive(Default)]
@@ -10,6 +8,7 @@ struct Flags {
     n: bool,
 }
 
+#[derive(Default)]
 struct Controller {
     up: bool,
     down: bool,
@@ -45,16 +44,20 @@ struct Cpu {
     fv: bool,
 }
 
-// TODO: Break up instructions into smaller steps.
-// e.g. Converting between u8, u16 and usize.
-// e.g. Type casting.
+trait Memory {
+    fn read_u16(&self, index: usize) -> u16;
+    fn write_u16(&mut self, index: usize, value: u16);
+}
 
-// TODO: Create a Memory struct for getting, setting memory.
-// e.g. Indexing with u8, u16, multiple u8.
-// e.g. Extracting u16.
+impl Memory for Vec<u8> {
+    fn read_u16(&self, index: usize) -> u16 {
+        (self[index] as u16) & ((self[index + 1] as u16) << 0x8)
+    }
 
-fn read_u16(a: u8, b: u8) -> u16 {
-    (a as u16) & ((b as u16) << 0x8)
+    fn write_u16(&mut self, index: usize, value: u16) {
+        self[index] = (value & 0x00FF) as u8;
+        self[index + 1] = (value & 0xFF00 >> 0x8) as u8;
+    }
 }
 
 impl Cpu {
@@ -72,7 +75,7 @@ impl Cpu {
 
     fn step(&mut self) {
         let opcode = self.fetch();
-        let instruction = Instruction::from_opcode(opcode).expect("Instruction not found.");
+        let instruction = Instruction::decode(opcode).expect("Instruction not found.");
 
         self.execute(&instruction);
     }
@@ -84,93 +87,53 @@ impl Cpu {
                 self.bg = 0u8;
                 self.g.clear();
             }
-            Instruction::VBLNK => {
-                // TODO
-            }
+            Instruction::VBLNK => {}
             Instruction::BGC { n } => {
                 self.bg = n;
             }
-            Instruction::SPR { hhll } => {
+            Instruction::SPR { ll, hh } => {
                 self.sw = ll;
                 self.sh = hh;
             }
-            Instruction::DRWI { y, x, hhll } => {
-                // TODO
-            }
-            Instruction::DRWR { y, x, z } => {
-                // TODO
-            }
-            Instruction::RND { x, hhll } => {
-                // TODO
-            }
+            Instruction::DRWI { y, x, hhll } => {}
+            Instruction::DRWR { y, x, z } => {}
+            Instruction::RND { x, hhll } => {}
             Instruction::FLIP { fh, fv } => {
                 self.fh = fh;
                 self.fv = fv;
             }
-            Instruction::SND0 {} => {
-                // TODO
-            }
-            Instruction::SND1 { hhll } => {
-                //TODO
-            }
-            Instruction::SND2 { hhll } => {
-                // TODO
-            }
-            Instruction::SND3 { hhll } => {
-                // TODO
-            }
-            Instruction::SNP { x, hhll } => {
-                // TODO
-            }
-            Instruction::SNG { ad, sr, vt } => {
-                // TODO
-            }
+            Instruction::SND0 {} => {}
+            Instruction::SND1 { hhll } => {}
+            Instruction::SND2 { hhll } => {}
+            Instruction::SND3 { hhll } => {}
+            Instruction::SNP { x, hhll } => {}
+            Instruction::SNG { ad, sr, vt } => {}
             Instruction::JMPI { hhll } => {
-                // self.pc = LittleEndian::read_u16(&[hhll]);
-                // self.pc = (ll as u16) & ((hh as u16) << 0x8);
                 self.pc = hhll;
             }
-            Instruction::JMC { hhll } => {
-                // TODO
-            }
-            Instruction::JX { x, hhll } => {
-                // TODO
-            }
+            Instruction::JMC { hhll } => {}
+            Instruction::JX { x, hhll } => {}
             Instruction::JME { y, x, hhll } => {
-                // self.r.set(x, self.r.get(y))
-                // self.r[x] = self.r[y] -> custom Index<u8>
                 if self.r[x as usize] == self.r[y as usize] {
                     self.pc = hhll;
                 }
             }
             Instruction::CALLI { hhll } => {
-                let sp = self.sp as usize;
-                // self.memory.set(self.sp, self.pc)
-                // self.memory.set(self.sp, self.pc)
-                self.m[sp] = (self.pc & 0x00FF) as u8;
-                self.m[sp + 1] = (self.pc & 0xFF00 >> 0x8) as u8;
+                self.m.write_u16(self.sp as usize, self.pc);
                 self.sp += 2;
                 self.pc = hhll;
             }
             Instruction::RET => {
                 self.sp -= 2;
-                // self.pc = self.m.get(self.sp)
-                self.pc = (self.m[self.sp as usize] as u16)
-                    & ((self.m[(self.sp + 1) as usize] as u16) << 0x8);
+                self.pc = self.m.read_u16(self.sp as usize);
             }
             Instruction::JMPR { x } => {
-                // NOTE: This is supposed to be [x] not x.
-                self.pc = x as u16;
+                self.pc = self.m.read_u16(x as usize);
             }
-            Instruction::CX { x, hhll } => {
-                // TODO
-            }
+            Instruction::CX { x, hhll } => {}
             Instruction::CALLR { x } => {
-                // self.set(self.sp, self.pc)
-                self.m[self.sp as usize] = (self.pc & 0x00FF) as u8;
-                self.m[(self.sp + 1) as usize] = (self.pc & 0xFF00 >> 0x8) as u8;
+                self.m.write_u16(self.sp as usize, self.pc);
                 self.sp += 2;
-                // self.pc = self.r.get(x)
                 self.pc = self.r[x as usize];
             }
             Instruction::LDIR { x, hhll } => {
@@ -179,19 +142,17 @@ impl Cpu {
             Instruction::LDIS { hhll } => {
                 self.sp = hhll;
             }
-            Instruction::LDMI { x, hhll } => {
-                // self.m[hhll as usize] = self.r[x as usize];
-            }
+            Instruction::LDMI { x, hhll } => {}
             Instruction::LDMR { y, x } => {
-                self.r[x as usize] =
-                    (self.m[y as usize] as u16) & ((self.m[(y + 1) as usize] as u16) << 0x8);
+                self.r[x as usize] = self.m.read_u16(y as usize);
             }
             Instruction::MOV { y, x } => {
                 self.r[x as usize] = self.r[y as usize];
             }
-            _ => {
-                // TODO
-            }
+            _ => {}
         };
     }
 }
+
+#[cfg(test)]
+mod test {}
