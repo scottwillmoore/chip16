@@ -1,7 +1,7 @@
 // TODO: create flags type: for easy decoding, encoding of flags
 // TODO: create separate memory type: for safe, convinient access of memory
-extern crate byteorder;
 
+mod condition;
 mod cpu;
+mod flags;
 mod instruction;
-mod memory;
