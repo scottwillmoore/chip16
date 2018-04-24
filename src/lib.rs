@@ -1,5 +1,4 @@
-// TODO: create flags type: for easy decoding, encoding of flags
-// TODO: create separate memory type: for safe, convinient access of memory
+extern crate rand;
 
 mod condition;
 mod cpu;

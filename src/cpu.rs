@@ -1,3 +1,5 @@
+use rand;
+
 use condition::Condition;
 use flags::Flags;
 use instruction::Instruction;
@@ -43,7 +45,7 @@ impl Memory for Vec<u8> {
 }
 
 impl Cpu {
-    fn new() -> Cpu {
+    pub fn new() -> Cpu {
         Cpu {
             m: Vec::with_capacity(65_536),
             v: Vec::with_capacity(320 * 240),
@@ -51,7 +53,7 @@ impl Cpu {
         }
     }
 
-    fn step(&mut self) {
+    pub fn step(&mut self) {
         let instruction = self.fetch();
 
         self.execute(&instruction);
@@ -88,7 +90,7 @@ impl Cpu {
                 self.bg = 0u8;
                 self.v.clear();
             }
-            Instruction::VBLNK => {}
+            // Instruction::VBLNK => {}
             Instruction::BGC { n } => {
                 self.bg = n;
             }
@@ -96,19 +98,21 @@ impl Cpu {
                 self.sw = ll;
                 self.sh = hh;
             }
-            Instruction::DRWI { y, x, hhll } => {}
-            Instruction::DRWR { y, x, z } => {}
-            Instruction::RND { x, hhll } => {}
+            // Instruction::DRWI { y, x, hhll } => {}
+            // Instruction::DRWR { y, x, z } => {}
+            // Instruction::RND { x, hhll } => {
+            //     self.r[x as usize] = rand::random::<u16>() % hhll;
+            // }
             Instruction::FLIP { fh, fv } => {
                 self.fh = fh;
                 self.fv = fv;
             }
-            Instruction::SND0 {} => {}
-            Instruction::SND1 { hhll } => {}
-            Instruction::SND2 { hhll } => {}
-            Instruction::SND3 { hhll } => {}
-            Instruction::SNP { x, hhll } => {}
-            Instruction::SNG { ad, sr, vt } => {}
+            // Instruction::SND0 {} => {}
+            // Instruction::SND1 { hhll } => {}
+            // Instruction::SND2 { hhll } => {}
+            // Instruction::SND3 { hhll } => {}
+            // Instruction::SNP { x, hhll } => {}
+            // Instruction::SNG { ad, sr, vt } => {}
             Instruction::JMPI { hhll } => {
                 self.pc = hhll;
             }
@@ -174,46 +178,149 @@ impl Cpu {
                     .write_u16(self.r[y as usize] as usize, self.r[x as usize]);
             }
             Instruction::ADDI { x, hhll } => {
-                // TODO: Handle flags!
-
-                self.r[x as usize] = self.r[x as usize] + hhll;
+                self.f.set_on_add(self.r[x as usize], hhll);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_add(hhll);
             }
-            Instruction::ADDR2 { y, x } => {}
-            Instruction::ADDR3 { y, x, z } => {}
-            Instruction::SUBI { x, hhll } => {}
-            Instruction::SUBR2 { y, x } => {}
-            Instruction::SUBR3 { y, x, z } => {}
-            Instruction::CMPI { x, hhll } => {}
-            Instruction::CMPR { y, x } => {}
-            Instruction::ANDI { x, hhll } => {}
-            Instruction::ANDR2 { y, x } => {}
-            Instruction::ANDR3 { y, x, z } => {}
-            Instruction::TSTI { x, hhll } => {}
-            Instruction::TST { y, x } => {}
-            Instruction::ORI { x, hhll } => {}
-            Instruction::ORR2 { y, x } => {}
-            Instruction::ORR3 { y, x, z } => {}
-            Instruction::XORI { x, hhll } => {}
-            Instruction::XORR2 { y, x } => {}
-            Instruction::XORR3 { y, x, z } => {}
-            Instruction::MULI { x, hhll } => {}
-            Instruction::MULR2 { y, x } => {}
-            Instruction::MULR3 { y, x, z } => {}
-            Instruction::DIVI { x, hhll } => {}
-            Instruction::DIVR2 { y, x } => {}
-            Instruction::DIVR3 { y, x, z } => {}
-            Instruction::MODI { x, hhll } => {}
-            Instruction::MODR2 { y, x } => {}
-            Instruction::MODR3 { y, x, z } => {}
-            Instruction::REMI { x, hhll } => {}
-            Instruction::REMR2 { y, x } => {}
-            Instruction::REMR3 { y, x, z } => {}
-            Instruction::SHLN { x, n } => {}
-            Instruction::SHRN { x, n } => {}
-            Instruction::SARN { x, n } => {}
-            Instruction::SHLR { y, x } => {}
-            Instruction::SHRR { y, x } => {}
-            Instruction::SARR { y, x } => {}
+            Instruction::ADDR2 { y, x } => {
+                self.f.set_on_add(self.r[x as usize], self.r[y as usize]);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_add(self.r[y as usize]);
+            }
+            Instruction::ADDR3 { y, x, z } => {
+                self.f.set_on_add(self.r[x as usize], self.r[y as usize]);
+                self.r[z as usize] = (self.r[x as usize]).wrapping_add(self.r[y as usize]);
+            }
+            Instruction::SUBI { x, hhll } => {
+                self.f.set_on_sub(self.r[x as usize], hhll);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_sub(hhll);
+            }
+            Instruction::SUBR2 { y, x } => {
+                self.f.set_on_sub(self.r[x as usize], self.r[y as usize]);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_sub(self.r[y as usize]);
+            }
+            Instruction::SUBR3 { y, x, z } => {
+                self.f.set_on_sub(self.r[x as usize], self.r[y as usize]);
+                self.r[z as usize] = (self.r[x as usize]).wrapping_sub(self.r[y as usize]);
+            }
+            Instruction::CMPI { x, hhll } => {
+                self.f.set_on_sub(self.r[x as usize], hhll);
+            }
+            Instruction::CMPR { y, x } => {
+                self.f.set_on_sub(self.r[x as usize], self.r[y as usize]);
+            }
+            Instruction::ANDI { x, hhll } => {
+                self.f.set_on_and(self.r[x as usize], hhll);
+                self.r[x as usize] = self.r[x as usize] & hhll;
+            }
+            Instruction::ANDR2 { y, x } => {
+                self.f.set_on_and(self.r[x as usize], self.r[y as usize]);
+                self.r[x as usize] = self.r[x as usize] & self.r[y as usize];
+            }
+            Instruction::ANDR3 { y, x, z } => {
+                self.f.set_on_and(self.r[x as usize], self.r[y as usize]);
+                self.r[z as usize] = self.r[x as usize] & self.r[y as usize];
+            }
+            Instruction::TSTI { x, hhll } => {
+                self.f.set_on_and(self.r[x as usize], hhll);
+            }
+            Instruction::TST { y, x } => {
+                self.f.set_on_and(self.r[x as usize], self.r[y as usize]);
+            }
+            Instruction::ORI { x, hhll } => {
+                self.f.set_on_or(self.r[x as usize], hhll);
+                self.r[x as usize] = self.r[x as usize] | hhll;
+            }
+            Instruction::ORR2 { y, x } => {
+                self.f.set_on_or(self.r[x as usize], self.r[y as usize]);
+                self.r[x as usize] = self.r[x as usize] | self.r[y as usize];
+            }
+            Instruction::ORR3 { y, x, z } => {
+                self.f.set_on_or(self.r[x as usize], self.r[y as usize]);
+                self.r[z as usize] = self.r[x as usize] | self.r[y as usize];
+            }
+            Instruction::XORI { x, hhll } => {
+                self.f.set_on_xor(self.r[x as usize], hhll);
+                self.r[x as usize] = self.r[x as usize] ^ hhll;
+            }
+            Instruction::XORR2 { y, x } => {
+                self.f.set_on_xor(self.r[x as usize], self.r[y as usize]);
+                self.r[x as usize] = self.r[x as usize] ^ self.r[y as usize];
+            }
+            Instruction::XORR3 { y, x, z } => {
+                self.f.set_on_xor(self.r[x as usize], self.r[y as usize]);
+                self.r[z as usize] = self.r[x as usize] ^ self.r[y as usize];
+            }
+            Instruction::MULI { x, hhll } => {
+                self.f.set_on_mul(self.r[x as usize], hhll);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_mul(hhll);
+            }
+            Instruction::MULR2 { y, x } => {
+                self.f.set_on_mul(self.r[x as usize], self.r[y as usize]);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_mul(self.r[y as usize]);
+            }
+            Instruction::MULR3 { y, x, z } => {
+                self.f.set_on_mul(self.r[x as usize], self.r[y as usize]);
+                self.r[z as usize] = (self.r[x as usize]).wrapping_mul(self.r[y as usize]);
+            }
+            Instruction::DIVI { x, hhll } => {
+                self.f.set_on_div(self.r[x as usize], hhll);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_div(hhll);
+            }
+            Instruction::DIVR2 { y, x } => {
+                self.f.set_on_div(self.r[x as usize], self.r[y as usize]);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_div(self.r[y as usize]);
+            }
+            Instruction::DIVR3 { y, x, z } => {
+                self.f.set_on_div(self.r[x as usize], self.r[y as usize]);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_div(self.r[y as usize]);
+            }
+            // Instruction::MODI { x, hhll } => {
+            //     // self.f.set_on_mod(self.r[x as usize], hhll);
+            //     // self.r[x as usize] = (self.r[x as usize]).wrapping_mod(hhll);
+            // }
+            // Instruction::MODR2 { y, x } => {
+            //     // self.f.set_on_mod(self.r[x as usize], self.r[y as usize]);
+            //     // self.r[x as usize] = (self.r[x as usize]).wrapping_mod(self.r[y as usize]);
+            // }
+            // Instruction::MODR3 { y, x, z } => {
+            //     // self.f.set_on_mod(self.r[x as usize], self.r[y as usize]);
+            //     // self.r[z as usize] = (self.r[x as usize]).wrapping_mod(self.r[y as usize]);
+            // }
+            Instruction::REMI { x, hhll } => {
+                self.f.set_on_rem(self.r[x as usize], hhll);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_rem(hhll);
+            }
+            Instruction::REMR2 { y, x } => {
+                self.f.set_on_rem(self.r[x as usize], self.r[y as usize]);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_rem(self.r[y as usize]);
+            }
+            Instruction::REMR3 { y, x, z } => {
+                self.f.set_on_rem(self.r[x as usize], self.r[y as usize]);
+                self.r[z as usize] = (self.r[x as usize]).wrapping_rem(self.r[y as usize]);
+            }
+            Instruction::SHLN { x, n } => {
+                self.f.set_on_shl(self.r[x as usize], n as u16);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_shl(n as u32);
+            }
+            Instruction::SHRN { x, n } => {
+                self.f.set_on_shr(self.r[x as usize], n as u16);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_shr(n as u32);
+            }
+            // Instruction::SARN { x, n } => {
+            //     self.f.set_on_sar(self.r[x as usize], n as u16);
+            //     // self.r[x as usize] = (self.r[x as usize]).wrapping_shl(n);
+            // }
+            Instruction::SHLR { y, x } => {
+                self.f.set_on_shl(self.r[x as usize], self.r[y as usize]);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_shl(self.r[y as usize] as u32);
+            }
+            Instruction::SHRR { y, x } => {
+                self.f.set_on_shr(self.r[x as usize], self.r[y as usize]);
+                self.r[x as usize] = (self.r[x as usize]).wrapping_shr(self.r[y as usize] as u32);
+            }
+            // Instruction::SARR { y, x } => {
+            //     self.f.set_on_shl(self.r[x as usize], self.r[y as usize]);
+            //     // self.r[x as usize] = (self.r[x as usize]).wrapping_shl(self.r[y as usize]);
+            // }
             Instruction::PUSH { x } => {
                 self.m.write_u16(self.sp as usize, self.r[x as usize]);
                 self.sp += 2;
@@ -259,13 +366,33 @@ impl Cpu {
                     i += 3;
                 }
             }
-            Instruction::NOTI { hhll } => {}
-            Instruction::NOTR1 { x } => {}
-            Instruction::NOTR2 { y, x } => {}
-            Instruction::NEGI { x, hhll } => {}
-            Instruction::NEGR1 { x } => {}
-            Instruction::NEGR2 { y, x } => {}
-            _ => {}
+            Instruction::NOTI { x, hhll } => {
+                self.f.set_on_not(hhll);
+                self.r[x as usize] = !hhll;
+            }
+            Instruction::NOTR1 { x } => {
+                self.f.set_on_not(self.r[x as usize]);
+                self.r[x as usize] = !self.r[x as usize];
+            }
+            Instruction::NOTR2 { y, x } => {
+                self.f.set_on_not(self.r[x as usize]);
+                self.r[x as usize] = !self.r[y as usize];
+            }
+            Instruction::NEGI { x, hhll } => {
+                self.f.set_on_neg(hhll);
+                self.r[x as usize] = -(hhll as i16) as u16;
+            }
+            Instruction::NEGR1 { x } => {
+                self.f.set_on_neg(self.r[x as usize]);
+                self.r[x as usize] = -(self.r[x as usize] as i16) as u16;
+            }
+            Instruction::NEGR2 { y, x } => {
+                self.f.set_on_neg(self.r[x as usize]);
+                self.r[x as usize] = -(self.r[y as usize] as i16) as u16;
+            }
+            _ => {
+                println!("Instuction not implemented.");
+            }
         };
     }
 }
