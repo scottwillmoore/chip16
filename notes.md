@@ -5,15 +5,6 @@ Implement all defined instructions.
 
 Import enum variations into cpu module, NOP vs. Instruction::NOP.
 
-Import instructions and flags into cpu module individually.
-````rust
-use instruction::Instruction;
-Instruction::ADDR2;
-
-use instruction::Instruction::*;
-ADDR2;
-````
-
 Implement structs for memory, registers, palette, etc.
 ````rust
 impl Memory<T, U> {
@@ -40,6 +31,15 @@ Consider execution of various versions of c16. How would this be handled?
 
 Seperate binary and library from each other. Create implementation using pistion2d-graphics.
 Possible folder names for the seperation could be core, graphics, wasm.
+
+Done. Import instructions and flags into cpu module individually.
+````rust
+use instruction::Instruction;
+Instruction::ADDR2;
+
+use instruction::Instruction::*;
+ADDR2;
+````
 
 Done. Change structs to use a more descriptive naming format.
 ````rust
