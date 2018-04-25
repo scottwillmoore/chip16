@@ -1,30 +1,17 @@
+Use the existing mash16 emulator to test current implementation.
+This could be modifying mash16 to create a memory dump after execution for comparison.
+
 Implement all defined instructions.
 
 Import enum variations into cpu module, NOP vs. Instruction::NOP.
 
-Change structs to use a more descriptive naming format.
+Import instructions and flags into cpu module individually.
 ````rust
-struct Flags {
-    carry: bool,
-    zero: bool,
-    overflow: bool,
-    negative: bool,
-}
+use instruction::Instruction;
+Instruction::ADDR2;
 
-struct Cpu {
-    memory: Vec<u8>,
-    registers: [u16; 16],
-    flags: Flags,
-    program_counter: u16,
-    stack_pointer: u16,
-    video_memory: Vec<u8>,
-    palette: [Color; 16],
-    background: u8,
-    sprite_height: u8,
-    sprite_width: u8,
-    flip_horizontal: bool,
-    flip_vertical: bool,
-}
+use instruction::Instruction::*;
+ADDR2;
 ````
 
 Implement structs for memory, registers, palette, etc.
@@ -50,3 +37,31 @@ Write unit tests for each instruction.
 Write integration tests for expected execution of c16 binaries.
 
 Consider execution of various versions of c16. How would this be handled?
+
+Seperate binary and library from each other. Create implementation using pistion2d-graphics.
+Possible folder names for the seperation could be core, graphics, wasm.
+
+Done. Change structs to use a more descriptive naming format.
+````rust
+struct Flags {
+    carry: bool,
+    zero: bool,
+    overflow: bool,
+    negative: bool,
+}
+
+struct Cpu {
+    memory: Vec<u8>,
+    registers: [u16; 16],
+    flags: Flags,
+    program_counter: u16,
+    stack_pointer: u16,
+    video_memory: Vec<u8>,
+    palette: [Color; 16],
+    background: u8,
+    sprite_height: u8,
+    sprite_width: u8,
+    flip_horizontal: bool,
+    flip_vertical: bool,
+}
+````
