@@ -3,6 +3,20 @@ use std::fmt;
 use self::Instruction::*;
 use condition::Condition;
 
+// Various ways of implementing instructions.
+// https://play.rust-lang.org/?gist=3171b5b9c95e751f610198647b5ba054&version=stable&mode=debug
+
+// type RR = { x: u8, y: u8 };
+
+// enum InstructionFormat {
+//     R { x: u8, y: u8 },
+//     RR { x: u8, y: u8 },
+//     RRR { x: u8, y: u8, z: u8 },
+//     A { address: u16 },
+//     RA { x: u8, address: u16 },
+//     CA { condition: Condition, address: u16 },
+// }
+
 pub enum Instruction {
     NOP,
     CLS,

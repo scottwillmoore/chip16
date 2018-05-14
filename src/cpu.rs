@@ -9,6 +9,9 @@ struct Color {
     b: u8,
 }
 
+// Various fixes to memory manipulation problems.
+// https://play.rust-lang.org/?gist=b0838deb612fa1ca298ba01bc00ceaee&version=stable&mode=debug
+
 #[derive(Default)]
 pub struct Cpu {
     memory: Vec<u8>,
@@ -178,6 +181,7 @@ impl Cpu {
                 self.stack_pointer = hhll;
             }
             LDMI { x, hhll } => {
+                // NOTE: This instruction is wrong.
                 self.registers[x as usize] = hhll;
             }
             LDMR { y, x } => {

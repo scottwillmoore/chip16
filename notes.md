@@ -1,3 +1,13 @@
+Revise instruction names. Consider more of the following...
+````
+ADD_R2
+LDR_I
+LDR_M
+STM_R
+JMP
+... etc
+````
+
 Use the existing mash16 emulator to test current implementation.
 This could be modifying mash16 to create a memory dump after execution for comparison.
 

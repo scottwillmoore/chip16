@@ -1,4 +1,5 @@
 use self::Condition::*;
+// NOTE: Maybe move this into `instruction.rs`.
 
 pub enum Condition {
     Z,
