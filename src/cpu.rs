@@ -1,5 +1,3 @@
-use rand;
-
 use condition::{Condition, Condition::*};
 use flags::Flags;
 use instruction::{Instruction, Instruction::*};
@@ -12,7 +10,7 @@ struct Color {
 }
 
 #[derive(Default)]
-struct Cpu {
+pub struct Cpu {
     memory: Vec<u8>,
     registers: [u16; 16],
     flags: Flags,
@@ -30,40 +28,56 @@ struct Cpu {
 trait Memory {
     fn read_u16(&self, index: usize) -> u16;
     fn write_u16(&mut self, index: usize, value: u16);
+    fn read_u32(&self, index: usize) -> u32;
+    fn write_u32(&mut self, index: usize, value: u32);
 }
 
 impl Memory for Vec<u8> {
     fn read_u16(&self, index: usize) -> u16 {
-        (self[index] as u16) & ((self[index + 1] as u16) << 0x8)
+        ((self[index] as u16) << 8) & (self[index + 1] as u16)
     }
 
     fn write_u16(&mut self, index: usize, value: u16) {
-        self[index] = (value & 0x00FF) as u8;
-        self[index + 1] = (value & 0xFF00 >> 0x8) as u8;
+        self[index + 0] = (value & 0xFF00 >> 8) as u8;
+        self[index + 1] = (value & 0x00FF) as u8;
+    }
+
+    fn read_u32(&self, index: usize) -> u32 {
+        ((self[index] as u32) << 24) & ((self[index + 1] as u32) << 16)
+            & ((self[index + 2] as u32) << 8) & (self[index + 4] as u32)
+    }
+
+    fn write_u32(&mut self, index: usize, value: u32) {
+        self[index + 0] = (value & 0xFF000000 >> 24) as u8;
+        self[index + 1] = (value & 0x00FF0000 >> 16) as u8;
+        self[index + 2] = (value & 0x0000FF00 >> 8) as u8;
+        self[index + 3] = (value & 0x000000FF) as u8;
     }
 }
 
 impl Cpu {
     pub fn new() -> Cpu {
         Cpu {
-            memory: Vec::with_capacity(65_536),
-            video_memory: Vec::with_capacity(320 * 240),
+            memory: vec![0; 65_536],
+            video_memory: vec![0; 320 * 240],
             ..Default::default()
         }
     }
 
     pub fn step(&mut self) {
         let instruction = self.fetch();
+        self.program_counter += 4;
 
         self.execute(&instruction);
     }
 
     fn fetch(&self) -> Instruction {
-        Instruction::decode(0).unwrap()
+        let opcode = self.memory.read_u32(self.program_counter as usize);
+        Instruction::decode(opcode).unwrap()
     }
 
     fn test(&self, condition: &Condition) -> bool {
-        match condition {
+        match *condition {
             Z => self.flags.zero,
             NZ => !self.flags.zero,
             N => self.flags.negative,
@@ -374,18 +388,14 @@ impl Cpu {
                 self.stack_pointer -= 2;
                 self.registers[x as usize] = self.memory.read_u16(self.stack_pointer as usize);
             }
-            PUSHALL => {
-                for r in self.registers.iter() {
-                    self.memory.write_u16(self.stack_pointer as usize, *r);
-                    self.stack_pointer += 2;
-                }
-            }
-            POPALL => {
-                for r in self.registers.iter_mut().rev() {
-                    *r = self.memory.read_u16(self.stack_pointer as usize);
-                    self.stack_pointer -= 2;
-                }
-            }
+            PUSHALL => for r in self.registers.iter() {
+                self.memory.write_u16(self.stack_pointer as usize, *r);
+                self.stack_pointer += 2;
+            },
+            POPALL => for r in self.registers.iter_mut().rev() {
+                *r = self.memory.read_u16(self.stack_pointer as usize);
+                self.stack_pointer -= 2;
+            },
             PUSHF => {
                 self.memory[self.stack_pointer as usize] = From::from(&self.flags);
                 self.stack_pointer += 2;
@@ -394,14 +404,12 @@ impl Cpu {
                 self.stack_pointer -= 2;
                 self.flags = From::from(self.memory[self.stack_pointer as usize]);
             }
-            PALI { hhll } => {
-                for p in self.palette.iter_mut() {
-                    p.r = self.memory[self.stack_pointer as usize];
-                    p.g = self.memory[(self.stack_pointer + 1) as usize];
-                    p.b = self.memory[(self.stack_pointer + 2) as usize];
-                    self.stack_pointer += 3;
-                }
-            }
+            PALI { hhll } => for p in self.palette.iter_mut() {
+                p.r = self.memory[self.stack_pointer as usize];
+                p.g = self.memory[(self.stack_pointer + 1) as usize];
+                p.b = self.memory[(self.stack_pointer + 2) as usize];
+                self.stack_pointer += 3;
+            },
             PALR { x } => {
                 let mut i = self.registers[x as usize];
                 for p in self.palette.iter_mut() {
