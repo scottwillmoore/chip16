@@ -1,6 +1,16 @@
+extern crate byteorder;
+extern crate crc;
 extern crate rand;
 
-mod condition;
 mod cpu;
-mod flags;
+pub use cpu::Cpu;
+
+mod memory;
+pub use memory::Memory;
+
+mod rom;
+pub use rom::Rom;
+
+mod condition;
 mod instruction;
+mod flags;
