@@ -1,6 +1,7 @@
 use flags::Flags;
 use instruction::{Condition, Instruction};
 use memory::{Memory, Read, Write};
+use registers::Registers;
 
 use self::Condition::*;
 use self::Instruction::*;
@@ -15,11 +16,11 @@ struct Color {
 #[derive(Default)]
 pub struct Cpu {
     memory: Memory,
-    registers: [u16; 16],
+    registers: Registers,
     flags: Flags,
     program_counter: u16,
     stack_pointer: u16,
-    video_memory: Vec<u8>,
+    video_memory: Vec<u8>, // TODO: Generalise Memory to support video_memory.
     palette: [Color; 16],
     background: u8,
     sprite_height: u8,
@@ -426,39 +427,143 @@ impl Cpu {
     }
 
     fn nop(&mut self) {}
+
     fn cls(&mut self) {
         self.background = 0;
         self.video_memory.clear();
     }
-    fn vblnk(&mut self) {}
-    fn bgc(&mut self, n: u8) {}
-    fn spr(&mut self, width: u8, height: u8) {}
-    fn drwi(&mut self, x: u8, y: u8, address: u16) {}
-    fn drwr(&mut self, x: u8, y: u8, z: u8) {}
-    fn rnd(&mut self, x: u8, address: u16) {}
-    fn flip(&mut self, flip_horizontal: bool, flip_vertical: bool) {}
-    fn snd0(&mut self) {}
-    fn snd1(&mut self, address: u16) {}
-    fn snd2(&mut self, address: u16) {}
-    fn snd3(&mut self, address: u16) {}
-    fn snp(&mut self, x: u8, address: u16) {}
-    fn sng(&mut self, attack: u8, decay: u8, sustain: u8, release: u8, volume: u8, wave: u8) {}
-    fn jmpi(&mut self, address: u16) {}
-    fn jmc(&mut self, address: u16) {}
-    fn jx(&mut self, condition: Condition, address: u16) {}
-    fn jme(&mut self, x: u8, y: u8, address: u16) {}
-    fn calli(&mut self, address: u16) {}
-    fn ret(&mut self) {}
-    fn jmpr(&mut self, x: u8) {}
-    fn cx(&mut self, condition: Condition, address: u16) {}
-    fn callr(&mut self, x: u8) {}
-    fn ldir(&mut self, x: u8, address: u16) {}
-    fn ldis(&mut self, address: u16) {}
-    fn ldmi(&mut self, x: u8, address: u16) {}
-    fn ldmr(&mut self, x: u8, y: u8) {}
-    fn mov(&mut self, x: u8, y: u8) {}
-    fn stmi(&mut self, x: u8, address: u16) {}
-    fn stmr(&mut self, x: u8, y: u8) {}
+
+    fn vblnk(&mut self) {
+        // TODO
+    }
+
+    fn bgc(&mut self, n: u8) {
+        self.background = n;
+    }
+
+    fn spr(&mut self, width: u8, height: u8) {
+        self.sprite_width = width;
+        self.sprite_height = height;
+    }
+
+    fn drwi(&mut self, x: u8, y: u8, address: u16) {
+        // TODO
+    }
+
+    fn drwr(&mut self, x: u8, y: u8, z: u8) {
+        // TODO
+    }
+
+    fn rnd(&mut self, x: u8, address: u16) {
+        // TODO
+    }
+
+    fn flip(&mut self, flip_horizontal: bool, flip_vertical: bool) {
+        self.flip_horizontal = flip_horizontal;
+        self.flip_vertical = flip_vertical;
+    }
+
+    fn snd0(&mut self) {
+        // TODO
+    }
+
+    fn snd1(&mut self, address: u16) {
+        // TODO
+    }
+
+    fn snd2(&mut self, address: u16) {
+        // TODO
+    }
+
+    fn snd3(&mut self, address: u16) {
+        // TODO
+    }
+
+    fn snp(&mut self, x: u8, address: u16) {
+        // TODO
+    }
+
+    fn sng(&mut self, attack: u8, decay: u8, sustain: u8, release: u8, volume: u8, wave: u8) {
+        // TODO
+    }
+
+    fn jmpi(&mut self, address: u16) {
+        self.program_counter = address;
+    }
+
+    fn jmc(&mut self, address: u16) {
+        // ?
+    }
+
+    fn jx(&mut self, condition: &Condition, address: u16) {
+        if self.test(condition) {
+            self.program_counter = address;
+        }
+    }
+
+    fn jme(&mut self, x: u8, y: u8, address: u16) {
+        if self.registers[x] == self.registers[y] {
+            self.program_counter = address;
+        }
+    }
+
+    fn calli(&mut self, address: u16) {
+        self.memory.write(self.stack_pointer, self.program_counter);
+        self.stack_pointer += 2;
+        self.program_counter = address;
+    }
+
+    fn ret(&mut self) {
+        self.stack_pointer -= 2;
+        self.program_counter = self.memory.read(self.stack_pointer);
+    }
+
+    fn jmpr(&mut self, x: u8) {
+        self.program_counter = self.registers[x];
+    }
+
+    fn cx(&mut self, condition: &Condition, address: u16) {
+        if self.test(condition) {
+            self.memory.write(self.stack_pointer, self.program_counter);
+            self.stack_pointer += 2;
+            self.program_counter = address;
+        }
+    }
+
+    fn callr(&mut self, x: u8) {
+        self.memory.write(self.stack_pointer, self.program_counter);
+        self.stack_pointer += 2;
+        self.program_counter = self.registers[x];
+    }
+
+    fn ldir(&mut self, x: u8, address: u16) {
+        self.registers[x] = address;
+    }
+
+    fn ldis(&mut self, address: u16) {
+        self.stack_pointer = address;
+    }
+
+    fn ldmi(&mut self, x: u8, address: u16) {
+        self.registers[x] = self.memory.read(address);
+    }
+
+    fn ldmr(&mut self, x: u8, y: u8) {
+        self.registers[x] = self.memory.read(self.registers[y]);
+    }
+
+    fn mov(&mut self, x: u8, y: u8) {
+        self.registers[x] = self.registers[y];
+    }
+
+    fn stmi(&mut self, x: u8, address: u16) {
+        self.memory.write(address, self.registers[x]);
+    }
+
+    fn stmr(&mut self, x: u8, y: u8) {
+        self.memory.write(self.registers[y], self.registers[x]);
+    }
+
     fn addi(&mut self, x: u8, address: u16) {}
     fn addr2(&mut self, x: u8, y: u8) {}
     fn addr3(&mut self, x: u8, y: u8, z: u8) {}
