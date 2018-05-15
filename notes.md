@@ -1,12 +1,7 @@
-Revise instruction names. Consider more of the following...
-````
-ADD_R2
-LDR_I
-LDR_M
-STM_R
-JMP
-... etc
-````
+// Various ways of implementing instructions.
+// https://play.rust-lang.org/?gist=3171b5b9c95e751f610198647b5ba054&version=stable&mode=debug
+
+// Can implement various versions of instructions using traits and default methods.
 
 Use the existing mash16 emulator to test current implementation.
 This could be modifying mash16 to create a memory dump after execution for comparison.
@@ -41,6 +36,16 @@ Consider execution of various versions of c16. How would this be handled?
 
 Seperate binary and library from each other. Create implementation using pistion2d-graphics.
 Possible folder names for the seperation could be core, graphics, wasm.
+
+Done. Revise instruction names. Consider more of the following...
+````
+ADD_R2
+LDR_I
+LDR_M
+STM_R
+JMP
+... etc
+````
 
 Done. Import instructions and flags into cpu module individually.
 ````rust

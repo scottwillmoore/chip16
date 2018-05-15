@@ -11,6 +11,5 @@ pub use memory::Memory;
 mod rom;
 pub use rom::Rom;
 
-mod condition;
-mod instruction;
 mod flags;
+mod instruction;
