@@ -1,7 +1,6 @@
 // Consider refractoring Memory into a trait, so a various implementation can be made.
 // E.g. MockMemory an implementation that does not actually execute any of the functions.
 // E.g. FileMemory an implementation that saves all changes to file.
-use std::default::Default;
 use std::mem;
 
 pub const ADDRESSABLE_MEMORY: usize = 65_536;
