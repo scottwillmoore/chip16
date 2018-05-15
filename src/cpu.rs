@@ -1,7 +1,6 @@
 use flags::Flags;
 use instruction::{Condition, Instruction};
 use memory::{Memory, Read, Write};
-use rom::Rom;
 
 use self::Condition::*;
 use self::Instruction::*;
@@ -29,10 +28,6 @@ pub struct Cpu {
     flip_vertical: bool,
 }
 
-trait Execute {
-    fn nop(&self);
-}
-
 impl Cpu {
     pub fn new() -> Cpu {
         Cpu {
@@ -42,18 +37,19 @@ impl Cpu {
     }
 
     pub fn step(&mut self) {
+        // TODO: Handle errors that fetch could possibly throw.
         let instruction = self.fetch();
         self.program_counter += 4;
 
         self.execute(&instruction);
     }
 
-    fn fetch(&self) -> Instruction {
+    pub fn fetch(&self) -> Instruction {
         let opcode = self.memory.read(self.program_counter);
         Instruction::decode(opcode).unwrap()
     }
 
-    fn test(&self, condition: &Condition) -> bool {
+    pub fn test(&self, condition: &Condition) -> bool {
         match *condition {
             Z => self.flags.zero,
             NZ => !self.flags.zero,
@@ -73,14 +69,13 @@ impl Cpu {
         }
     }
 
-    fn execute(&mut self, instruction: &Instruction) {
+    pub fn execute(&mut self, instruction: &Instruction) {
         match *instruction {
-            NOP => {}
-            CLS => {
-                self.background = 0u8;
-                self.video_memory.clear();
-            }
-            // VBLNK => {}
+            NOP => self.nop(),
+            CLS => self.cls(),
+            VBLNK => self.vblnk(),
+
+            // TODO: Translate remaining instructions into new format.
             BGC { n } => {
                 self.background = n;
             }
@@ -429,4 +424,90 @@ impl Cpu {
             }
         };
     }
+
+    fn nop(&mut self) {}
+    fn cls(&mut self) {
+        self.background = 0;
+        self.video_memory.clear();
+    }
+    fn vblnk(&mut self) {}
+    fn bgc(&mut self, n: u8) {}
+    fn spr(&mut self, width: u8, height: u8) {}
+    fn drwi(&mut self, x: u8, y: u8, address: u16) {}
+    fn drwr(&mut self, x: u8, y: u8, z: u8) {}
+    fn rnd(&mut self, x: u8, address: u16) {}
+    fn flip(&mut self, flip_horizontal: bool, flip_vertical: bool) {}
+    fn snd0(&mut self) {}
+    fn snd1(&mut self, address: u16) {}
+    fn snd2(&mut self, address: u16) {}
+    fn snd3(&mut self, address: u16) {}
+    fn snp(&mut self, x: u8, address: u16) {}
+    fn sng(&mut self, attack: u8, decay: u8, sustain: u8, release: u8, volume: u8, wave: u8) {}
+    fn jmpi(&mut self, address: u16) {}
+    fn jmc(&mut self, address: u16) {}
+    fn jx(&mut self, condition: Condition, address: u16) {}
+    fn jme(&mut self, x: u8, y: u8, address: u16) {}
+    fn calli(&mut self, address: u16) {}
+    fn ret(&mut self) {}
+    fn jmpr(&mut self, x: u8) {}
+    fn cx(&mut self, condition: Condition, address: u16) {}
+    fn callr(&mut self, x: u8) {}
+    fn ldir(&mut self, x: u8, address: u16) {}
+    fn ldis(&mut self, address: u16) {}
+    fn ldmi(&mut self, x: u8, address: u16) {}
+    fn ldmr(&mut self, x: u8, y: u8) {}
+    fn mov(&mut self, x: u8, y: u8) {}
+    fn stmi(&mut self, x: u8, address: u16) {}
+    fn stmr(&mut self, x: u8, y: u8) {}
+    fn addi(&mut self, x: u8, address: u16) {}
+    fn addr2(&mut self, x: u8, y: u8) {}
+    fn addr3(&mut self, x: u8, y: u8, z: u8) {}
+    fn subi(&mut self, x: u8, address: u16) {}
+    fn subr2(&mut self, x: u8, y: u8) {}
+    fn subr3(&mut self, x: u8, y: u8, z: u8) {}
+    fn cmpi(&mut self, x: u8, address: u16) {}
+    fn cmpr(&mut self, x: u8, y: u8) {}
+    fn andi(&mut self, x: u8, address: u16) {}
+    fn andr2(&mut self, x: u8, y: u8) {}
+    fn andr3(&mut self, x: u8, y: u8, z: u8) {}
+    fn tsti(&mut self, x: u8, address: u16) {}
+    fn tstr(&mut self, x: u8, y: u8) {}
+    fn ori(&mut self, x: u8, address: u16) {}
+    fn orr2(&mut self, x: u8, y: u8) {}
+    fn orr3(&mut self, x: u8, y: u8, z: u8) {}
+    fn xori(&mut self, x: u8, address: u16) {}
+    fn xorr2(&mut self, x: u8, y: u8) {}
+    fn xorr3(&mut self, x: u8, y: u8, z: u8) {}
+    fn muli(&mut self, x: u8, address: u16) {}
+    fn mulr2(&mut self, x: u8, y: u8) {}
+    fn mulr3(&mut self, x: u8, y: u8, z: u8) {}
+    fn divi(&mut self, x: u8, address: u16) {}
+    fn divr2(&mut self, x: u8, y: u8) {}
+    fn divr3(&mut self, x: u8, y: u8, z: u8) {}
+    fn modi(&mut self, x: u8, address: u16) {}
+    fn modr2(&mut self, x: u8, y: u8) {}
+    fn modr3(&mut self, x: u8, y: u8, z: u8) {}
+    fn remi(&mut self, x: u8, address: u16) {}
+    fn remr2(&mut self, x: u8, y: u8) {}
+    fn remr3(&mut self, x: u8, y: u8, z: u8) {}
+    fn shln(&mut self, x: u8, n: u8) {}
+    fn shrn(&mut self, x: u8, n: u8) {}
+    fn sarn(&mut self, x: u8, n: u8) {}
+    fn shlr(&mut self, x: u8, y: u8) {}
+    fn shrr(&mut self, x: u8, y: u8) {}
+    fn sarr(&mut self, x: u8, y: u8) {}
+    fn push(&mut self, x: u8) {}
+    fn pop(&mut self, x: u8) {}
+    fn pushall(&mut self) {}
+    fn popall(&mut self) {}
+    fn pushf(&mut self) {}
+    fn popf(&mut self) {}
+    fn pali(&mut self, address: u16) {}
+    fn palr(&mut self, x: u8) {}
+    fn noti(&mut self, x: u8, address: u16) {}
+    fn notr1(&mut self, x: u8) {}
+    fn notr2(&mut self, x: u8, y: u8) {}
+    fn negi(&mut self, x: u8, address: u16) {}
+    fn negr1(&mut self, x: u8) {}
+    fn negr2(&mut self, x: u8, y: u8) {}
 }
