@@ -1,3 +1,6 @@
+RESEARCH.
+--------------------
+
 Various ways of implementing instructions.
 https://play.rust-lang.org/?gist=3171b5b9c95e751f610198647b5ba054&version=stable&mode=debug
 
@@ -7,16 +10,34 @@ https://play.rust-lang.org/?gist=b0838deb612fa1ca298ba01bc00ceaee&version=stable
 A way of defining CPU execution for multiple versions.
 https://play.rust-lang.org/?gist=8817e7dbcde8160bbf6f953f98ff6199&version=stable&mode=debug
 
-// Can implement various versions of instructions using traits and default methods.
+TASKS.
+--------------------
 
-Use the existing mash16 emulator to test current implementation.
+Proposal: Rename 'address' in the (some/all) of the instructions to immediate.
+Especially for the LD and ST instructions.
+You could use address, immediate and indirect, etc. Be more descriptive.
+
+Todo: Include opcode information in errors. E.g. What specific opcode failed?
+
+Todo: Use the existing mash16 emulator to test current implementation.
 This could be modifying mash16 to create a memory dump after execution for comparison.
+This could be used as a easy form of creating a suite of unit/integration tests.
 
-Implement all defined instructions.
+Todo: Write better documentation for public API.
 
-Import enum variations into cpu module, NOP vs. Instruction::NOP.
+Todo: Ensure functions exit gracefully and use errors. This should appear in public API.
 
-Implement structs for memory, registers, palette, etc.
+Todo: Create a c16 diassembler. This should be in a seperate module.
+
+Maybe: Implement a way to be faithful to c16 versions.
+E.g. Do not execute version 1.3 instructions for a 1.1 c16 binary.
+
+Maybe: Create a c16 assembler.
+
+COMPLETED.
+--------------------
+
+Done. Implement structs for memory, registers, palette, etc.
 ````rust
 impl Memory<T, U> {
     fn get<T, U>(&self, index: T) -> U {}
@@ -24,24 +45,9 @@ impl Memory<T, U> {
 }
 ````
 
-Write better documentation for each module.
+Done. Re-export each internal module into a single module.
 
-Re-export each internal module into a single module.
-
-Exit gracefully, or handle errors that may be raised.
-
-Create utilities for analysing cpu state.
-
-Implement a c16 disassembler (perhaps in a seperate module... may import enums from this module).
-
-Write unit tests for each instruction.
-
-Write integration tests for expected execution of c16 binaries.
-
-Consider execution of various versions of c16. How would this be handled?
-
-Seperate binary and library from each other. Create implementation using pistion2d-graphics.
-Possible folder names for the seperation could be core, graphics, wasm.
+Done. Import enum variations into cpu module, NOP vs. Instruction::NOP.
 
 Done. Revise instruction names. Consider more of the following...
 ````
