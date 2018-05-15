@@ -1,5 +1,11 @@
-// Various ways of implementing instructions.
-// https://play.rust-lang.org/?gist=3171b5b9c95e751f610198647b5ba054&version=stable&mode=debug
+Various ways of implementing instructions.
+https://play.rust-lang.org/?gist=3171b5b9c95e751f610198647b5ba054&version=stable&mode=debug
+
+Various fixes to memory manipulation problems.
+https://play.rust-lang.org/?gist=b0838deb612fa1ca298ba01bc00ceaee&version=stable&mode=debug
+
+A way of defining CPU execution for multiple versions.
+https://play.rust-lang.org/?gist=8817e7dbcde8160bbf6f953f98ff6199&version=stable&mode=debug
 
 // Can implement various versions of instructions using traits and default methods.
 
