@@ -1,4 +1,4 @@
-use std::ops::{Index, IndexMut};
+use std::ops::{Index, IndexMut, RangeFull};
 
 pub const ADDRESSABLE_REGISTERS: usize = 16;
 
@@ -24,3 +24,12 @@ impl<T: Into<usize>> IndexMut<T> for Registers {
         &mut self.0[index.into()]
     }
 }
+
+// https://play.rust-lang.org/?gist=6308392486273f90f72252e1787c0066&version=stable&mode=debug
+// impl Index<RangeFull> for Registers {
+//     type Output = u16;
+
+//     fn index(&self, index: RangeFull) -> &u16 {
+//         &self.0[index.into()]
+//     }
+// }
