@@ -25,6 +25,7 @@ impl<T: Into<usize>> IndexMut<T> for Registers {
     }
 }
 
+// NOTE: This is probably not possible. At least at the current time... :(
 // https://play.rust-lang.org/?gist=6308392486273f90f72252e1787c0066&version=stable&mode=debug
 // impl Index<RangeFull> for Registers {
 //     type Output = u16;

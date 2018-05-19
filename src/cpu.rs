@@ -7,13 +7,6 @@ use self::Condition::*;
 use self::Instruction::*;
 
 #[derive(Default)]
-struct Color {
-    r: u8,
-    g: u8,
-    b: u8,
-}
-
-#[derive(Default)]
 pub struct Cpu {
     memory: Memory,
     registers: Registers,
@@ -21,7 +14,7 @@ pub struct Cpu {
     program_counter: u16,
     stack_pointer: u16,
     video_memory: Vec<u8>, // TODO: Generalise Memory to support video_memory.
-    palette: [Color; 16],
+    palette: [(u8, u8, u8); 16],
     background: u8,
     sprite_height: u8,
     sprite_width: u8,
@@ -42,7 +35,7 @@ impl Cpu {
         let instruction = self.fetch();
         self.program_counter += 4;
 
-        self.execute(&instruction);
+        self.execute(instruction);
     }
 
     pub fn fetch(&self) -> Instruction {
@@ -70,359 +63,93 @@ impl Cpu {
         }
     }
 
-    pub fn execute(&mut self, instruction: &Instruction) {
-        match *instruction {
+    pub fn execute(&mut self, instruction: Instruction) {
+        // NOTE: Currently this function consumes the instruction.
+        // This may not be what we want... But the other ways are ugly...
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        match instruction {
             NOP => self.nop(),
             CLS => self.cls(),
             VBLNK => self.vblnk(),
-
-            // TODO: Translate remaining instructions into new format.
-            BGC { n } => {
-                self.background = n;
-            }
-            SPR { width, height } => {
-                self.sprite_width = width;
-                self.sprite_height = height;
-            }
-            // DRWI { y, x, hhll } => {}
-            // DRWR { y, x, z } => {}
-            // RND { x, hhll } => {
-            //     self.registers[x as usize] = rand::random::<u16>() % hhll;
-            // }
-            FLIP {
-                flip_horizontal,
-                flip_vertical,
-            } => {
-                self.flip_horizontal = flip_horizontal;
-                self.flip_vertical = flip_vertical;
-            }
-            // SND0 {} => {}
-            // SND1 { hhll } => {}
-            // SND2 { hhll } => {}
-            // SND3 { hhll } => {}
-            // SNP { x, hhll } => {}
-            // SNG { ad, sr, vt } => {}
-            // JMPI { hhll } => {
-            //     self.program_counter = hhll;
-            // }
-            // JMC { hhll } => {
-            //     if self.flags.carry {
-            //         self.program_counter = hhll;
-            //     }
-            // }
-            // JX { ref c, hhll } => {
-            //     if self.test(c) {
-            //         self.program_counter = hhll;
-            //     }
-            // }
-            // JME { y, x, hhll } => {
-            //     if self.registers[x as usize] == self.registers[y as usize] {
-            //         self.program_counter = hhll;
-            //     }
-            // }
-            // CALLI { hhll } => {
-            //     self.memory
-            //         .write_u16(self.stack_pointer as usize, self.program_counter);
-            //     self.stack_pointer += 2;
-            //     self.program_counter = hhll;
-            // }
-            // RET => {
-            //     self.stack_pointer -= 2;
-            //     self.program_counter = self.memory.read_u16(self.stack_pointer as usize);
-            // }
-            // JMPR { x } => {
-            //     self.program_counter = self.registers[x as usize];
-            // }
-            // CX { ref c, hhll } => {
-            //     if self.test(c) {
-            //         self.memory
-            //             .write_u16(self.stack_pointer as usize, self.program_counter);
-            //         self.stack_pointer += 2;
-            //         self.program_counter = hhll;
-            //     }
-            // }
-            // CALLR { x } => {
-            //     self.memory
-            //         .write_u16(self.stack_pointer as usize, self.program_counter);
-            //     self.stack_pointer += 2;
-            //     self.program_counter = self.registers[x as usize];
-            // }
-            // LDIR { x, hhll } => {
-            //     self.registers[x as usize] = hhll;
-            // }
-            // LDIS { hhll } => {
-            //     self.stack_pointer = hhll;
-            // }
-            // LDMI { x, hhll } => {
-            //     // NOTE: This instruction is wrong.
-            //     self.registers[x as usize] = hhll;
-            // }
-            // LDMR { y, x } => {
-            //     self.registers[x as usize] =
-            //         self.memory.read_u16(self.registers[y as usize] as usize);
-            // }
-            // MOV { y, x } => {
-            //     self.registers[x as usize] = self.registers[y as usize];
-            // }
-            // STMI { x, hhll } => {
-            //     self.memory
-            //         .write_u16(hhll as usize, self.registers[x as usize]);
-            // }
-            // STMR { y, x } => {
-            //     self.memory.write_u16(
-            //         self.registers[y as usize] as usize,
-            //         self.registers[x as usize],
-            //     );
-            // }
-            // ADDI { x, hhll } => {
-            //     self.flags.set_on_add(self.registers[x as usize], hhll);
-            //     self.registers[x as usize] = (self.registers[x as usize]).wrapping_add(hhll);
-            // }
-            // ADDR2 { y, x } => {
-            //     self.flags
-            //         .set_on_add(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[x as usize] =
-            //         (self.registers[x as usize]).wrapping_add(self.registers[y as usize]);
-            // }
-            // ADDR3 { y, x, z } => {
-            //     self.flags
-            //         .set_on_add(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[z as usize] =
-            //         (self.registers[x as usize]).wrapping_add(self.registers[y as usize]);
-            // }
-            // SUBI { x, hhll } => {
-            //     self.flags.set_on_sub(self.registers[x as usize], hhll);
-            //     self.registers[x as usize] = (self.registers[x as usize]).wrapping_sub(hhll);
-            // }
-            // SUBR2 { y, x } => {
-            //     self.flags
-            //         .set_on_sub(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[x as usize] =
-            //         (self.registers[x as usize]).wrapping_sub(self.registers[y as usize]);
-            // }
-            // SUBR3 { y, x, z } => {
-            //     self.flags
-            //         .set_on_sub(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[z as usize] =
-            //         (self.registers[x as usize]).wrapping_sub(self.registers[y as usize]);
-            // }
-            // CMPI { x, hhll } => {
-            //     self.flags.set_on_sub(self.registers[x as usize], hhll);
-            // }
-            // CMPR { y, x } => {
-            //     self.flags
-            //         .set_on_sub(self.registers[x as usize], self.registers[y as usize]);
-            // }
-            // ANDI { x, hhll } => {
-            //     self.flags.set_on_and(self.registers[x as usize], hhll);
-            //     self.registers[x as usize] = self.registers[x as usize] & hhll;
-            // }
-            // ANDR2 { y, x } => {
-            //     self.flags
-            //         .set_on_and(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[x as usize] =
-            //         self.registers[x as usize] & self.registers[y as usize];
-            // }
-            // ANDR3 { y, x, z } => {
-            //     self.flags
-            //         .set_on_and(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[z as usize] =
-            //         self.registers[x as usize] & self.registers[y as usize];
-            // }
-            // TSTI { x, hhll } => {
-            //     self.flags.set_on_and(self.registers[x as usize], hhll);
-            // }
-            // TSTR { y, x } => {
-            //     self.flags
-            //         .set_on_and(self.registers[x as usize], self.registers[y as usize]);
-            // }
-            // ORI { x, hhll } => {
-            //     self.flags.set_on_or(self.registers[x as usize], hhll);
-            //     self.registers[x as usize] = self.registers[x as usize] | hhll;
-            // }
-            // ORR2 { y, x } => {
-            //     self.flags
-            //         .set_on_or(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[x as usize] =
-            //         self.registers[x as usize] | self.registers[y as usize];
-            // }
-            // ORR3 { y, x, z } => {
-            //     self.flags
-            //         .set_on_or(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[z as usize] =
-            //         self.registers[x as usize] | self.registers[y as usize];
-            // }
-            // XORI { x, hhll } => {
-            //     self.flags.set_on_xor(self.registers[x as usize], hhll);
-            //     self.registers[x as usize] = self.registers[x as usize] ^ hhll;
-            // }
-            // XORR2 { y, x } => {
-            //     self.flags
-            //         .set_on_xor(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[x as usize] =
-            //         self.registers[x as usize] ^ self.registers[y as usize];
-            // }
-            // XORR3 { y, x, z } => {
-            //     self.flags
-            //         .set_on_xor(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[z as usize] =
-            //         self.registers[x as usize] ^ self.registers[y as usize];
-            // }
-            // MULI { x, hhll } => {
-            //     self.flags.set_on_mul(self.registers[x as usize], hhll);
-            //     self.registers[x as usize] = (self.registers[x as usize]).wrapping_mul(hhll);
-            // }
-            // MULR2 { y, x } => {
-            //     self.flags
-            //         .set_on_mul(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[x as usize] =
-            //         (self.registers[x as usize]).wrapping_mul(self.registers[y as usize]);
-            // }
-            // MULR3 { y, x, z } => {
-            //     self.flags
-            //         .set_on_mul(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[z as usize] =
-            //         (self.registers[x as usize]).wrapping_mul(self.registers[y as usize]);
-            // }
-            // DIVI { x, hhll } => {
-            //     self.flags.set_on_div(self.registers[x as usize], hhll);
-            //     self.registers[x as usize] = (self.registers[x as usize]).wrapping_div(hhll);
-            // }
-            // DIVR2 { y, x } => {
-            //     self.flags
-            //         .set_on_div(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[x as usize] =
-            //         (self.registers[x as usize]).wrapping_div(self.registers[y as usize]);
-            // }
-            // DIVR3 { y, x, z } => {
-            //     self.flags
-            //         .set_on_div(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[x as usize] =
-            //         (self.registers[x as usize]).wrapping_div(self.registers[y as usize]);
-            // }
-            // // MODI { x, hhll } => {
-            // //     // self.flags.set_on_mod(self.registers[x as usize], hhll);
-            // //     // self.registers[x as usize] = (self.registers[x as usize]).wrapping_mod(hhll);
-            // // }
-            // // MODR2 { y, x } => {
-            // //     // self.flags.set_on_mod(self.registers[x as usize], self.registers[y as usize]);
-            // //     // self.registers[x as usize] = (self.registers[x as usize]).wrapping_mod(self.registers[y as usize]);
-            // // }
-            // // MODR3 { y, x, z } => {
-            // //     // self.flags.set_on_mod(self.registers[x as usize], self.registers[y as usize]);
-            // //     // self.registers[z as usize] = (self.registers[x as usize]).wrapping_mod(self.registers[y as usize]);
-            // // }
-            // REMI { x, hhll } => {
-            //     self.flags.set_on_rem(self.registers[x as usize], hhll);
-            //     self.registers[x as usize] = (self.registers[x as usize]).wrapping_rem(hhll);
-            // }
-            // REMR2 { y, x } => {
-            //     self.flags
-            //         .set_on_rem(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[x as usize] =
-            //         (self.registers[x as usize]).wrapping_rem(self.registers[y as usize]);
-            // }
-            // REMR3 { y, x, z } => {
-            //     self.flags
-            //         .set_on_rem(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[z as usize] =
-            //         (self.registers[x as usize]).wrapping_rem(self.registers[y as usize]);
-            // }
-            // SHLN { x, n } => {
-            //     self.flags.set_on_shl(self.registers[x as usize], n as u16);
-            //     self.registers[x as usize] = (self.registers[x as usize]).wrapping_shl(n as u32);
-            // }
-            // SHRN { x, n } => {
-            //     self.flags.set_on_shr(self.registers[x as usize], n as u16);
-            //     self.registers[x as usize] = (self.registers[x as usize]).wrapping_shr(n as u32);
-            // }
-            // // SARN { x, n } => {
-            // //     self.flags.set_on_sar(self.registers[x as usize], n as u16);
-            // //     // self.registers[x as usize] = (self.registers[x as usize]).wrapping_shl(n);
-            // // }
-            // SHLR { y, x } => {
-            //     self.flags
-            //         .set_on_shl(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[x as usize] =
-            //         (self.registers[x as usize]).wrapping_shl(self.registers[y as usize] as u32);
-            // }
-            // SHRR { y, x } => {
-            //     self.flags
-            //         .set_on_shr(self.registers[x as usize], self.registers[y as usize]);
-            //     self.registers[x as usize] =
-            //         (self.registers[x as usize]).wrapping_shr(self.registers[y as usize] as u32);
-            // }
-            // // SARR { y, x } => {
-            // //     self.flags.set_on_shl(self.registers[x as usize], self.registers[y as usize]);
-            // //     // self.registers[x as usize] = (self.registers[x as usize]).wrapping_shl(self.registers[y as usize]);
-            // // }
-            // PUSH { x } => {
-            //     self.memory
-            //         .write_u16(self.stack_pointer as usize, self.registers[x as usize]);
-            //     self.stack_pointer += 2;
-            // }
-            // POP { x } => {
-            //     self.stack_pointer -= 2;
-            //     self.registers[x as usize] = self.memory.read_u16(self.stack_pointer as usize);
-            // }
-            // PUSHALL => for r in self.registers.iter() {
-            //     self.memory.write_u16(self.stack_pointer as usize, *r);
-            //     self.stack_pointer += 2;
-            // },
-            // POPALL => for r in self.registers.iter_mut().rev() {
-            //     *r = self.memory.read_u16(self.stack_pointer as usize);
-            //     self.stack_pointer -= 2;
-            // },
-            // PUSHF => {
-            //     self.memory[self.stack_pointer as usize] = From::from(&self.flags);
-            //     self.stack_pointer += 2;
-            // }
-            // POPF => {
-            //     self.stack_pointer -= 2;
-            //     self.flags = From::from(self.memory[self.stack_pointer as usize]);
-            // }
-            // PALI { hhll } => for p in self.palette.iter_mut() {
-            //     p.r = self.memory[self.stack_pointer as usize];
-            //     p.g = self.memory[(self.stack_pointer + 1) as usize];
-            //     p.b = self.memory[(self.stack_pointer + 2) as usize];
-            //     self.stack_pointer += 3;
-            // },
-            // PALR { x } => {
-            //     let mut i = self.registers[x as usize];
-            //     for p in self.palette.iter_mut() {
-            //         p.r = self.memory[i as usize];
-            //         p.g = self.memory[(i + 1) as usize];
-            //         p.b = self.memory[(i + 2) as usize];
-            //         i += 3;
-            //     }
-            // }
-            // NOTI { x, hhll } => {
-            //     self.flags.set_on_not(hhll);
-            //     self.registers[x as usize] = !hhll;
-            // }
-            // NOTR1 { x } => {
-            //     self.flags.set_on_not(self.registers[x as usize]);
-            //     self.registers[x as usize] = !self.registers[x as usize];
-            // }
-            // NOTR2 { y, x } => {
-            //     self.flags.set_on_not(self.registers[x as usize]);
-            //     self.registers[x as usize] = !self.registers[y as usize];
-            // }
-            // NEGI { x, hhll } => {
-            //     self.flags.set_on_neg(hhll);
-            //     self.registers[x as usize] = -(hhll as i16) as u16;
-            // }
-            // NEGR1 { x } => {
-            //     self.flags.set_on_neg(self.registers[x as usize]);
-            //     self.registers[x as usize] = -(self.registers[x as usize] as i16) as u16;
-            // }
-            // NEGR2 { y, x } => {
-            //     self.flags.set_on_neg(self.registers[x as usize]);
-            //     self.registers[x as usize] = -(self.registers[y as usize] as i16) as u16;
-            // }
-            _ => {
-                println!("Instuction not implemented.");
-            }
+            BGC { n } => self.bgc(n),
+            SPR { width, height } => self.spr(width, height),
+            DRWI { x, y, address } => self.drwi(x, y, address),
+            DRWR { x, y, z } => self.drwr(x, y, z),
+            RND { x, address } => self.rnd(x, address),
+            FLIP { flip_horizontal, flip_vertical } => self.flip(flip_horizontal, flip_vertical),
+            SND0 => self.snd0(),
+            SND1 { address } => self.snd1(address),
+            SND2 { address } => self.snd2(address),
+            SND3 { address } => self.snd3(address),
+            SNP { x, address } => self.snp(x, address),
+            SNG { attack, decay, sustain, release, volume, wave } => self.sng(attack, decay, sustain, release, volume, wave),
+            JMPI { address } => self.jmpi(address),
+            JMC { address } => self.jmc(address),
+            JX { condition, address } => self.jx(&condition, address),
+            JME { x, y, address } => self.jme(x, y, address),
+            CALLI { address } => self.calli(address),
+            RET => self.ret(),
+            JMPR { x } => self.jmpr(x),
+            CX { condition, address } => self.cx(&condition, address),
+            CALLR { x } => self.callr(x),
+            LDIR { x, immediate } => self.ldir(x, immediate),
+            LDIS { immediate } => self.ldis(immediate),
+            LDMI { x, address } => self.ldmi(x, address),
+            LDMR { x, y } => self.ldmr(x, y),
+            MOV { x, y } => self.mov(x, y),
+            STMI { x, address } => self.stmi(x, address),
+            STMR { x, y } => self.stmr(x, y),
+            ADDI { x, immediate } => self.addi(x, immediate),
+            ADDR2 { x, y } => self.addr2(x, y),
+            ADDR3 { x, y, z } => self.addr3(x, y, z),
+            SUBI { x, immediate } => self.subi(x, immediate),
+            SUBR2 { x, y } => self.subr2(x, y),
+            SUBR3 { x, y, z } => self.subr3(x, y, z),
+            CMPI { x, immediate } => self.cmpi(x, immediate),
+            CMPR { x, y } => self.cmpr(x, y),
+            ANDI { x, immediate } => self.andi(x, immediate),
+            ANDR2 { x, y } => self.andr2(x, y),
+            ANDR3 { x, y, z } => self.andr3(x, y, z),
+            TSTI { x, immediate } => self.tsti(x, immediate),
+            TSTR { x, y } => self.tstr(x, y),
+            ORI { x, immediate } => self.ori(x, immediate),
+            ORR2 { x, y } => self.orr2(x, y),
+            ORR3 { x, y, z } => self.orr3(x, y, z),
+            XORI { x, immediate } => self.xori(x, immediate),
+            XORR2 { x, y } => self.xorr2(x, y),
+            XORR3 { x, y, z } => self.xorr3(x, y, z),
+            MULI { x, immediate } => self.muli(x, immediate),
+            MULR2 { x, y } => self.mulr2(x, y),
+            MULR3 { x, y, z } => self.mulr3(x, y, z),
+            DIVI { x, immediate } => self.divi(x, immediate),
+            DIVR2 { x, y } => self.divr2(x, y),
+            DIVR3 { x, y, z } => self.divr3(x, y, z),
+            MODI { x, immediate } => self.modi(x, immediate),
+            MODR2 { x, y } => self.modr2(x, y),
+            MODR3 { x, y, z } => self.modr3(x, y, z),
+            REMI { x, immediate } => self.remi(x, immediate),
+            REMR2 { x, y } => self.remr2(x, y),
+            REMR3 { x, y, z } => self.remr3(x, y, z),
+            SHLN { x, n } => self.shln(x, n),
+            SHRN { x, n } => self.shrn(x, n),
+            SARN { x, n } => self.sarn(x, n),
+            SHLR { x, y } => self.shlr(x, y),
+            SHRR { x, y } => self.shrr(x, y),
+            SARR { x, y } => self.sarr(x, y),
+            PUSH { x } => self.push(x),
+            POP { x } => self.pop(x),
+            PUSHALL => self.pushall(),
+            POPALL => self.popall(),
+            PUSHF => self.pushf(),
+            POPF => self.popf(),
+            PALI { address } => self.pali(address),
+            PALR { x } => self.palr(x),
+            NOTI { x, immediate } => self.noti(x, immediate),
+            NOTR1 { x } => self.notr1(x),
+            NOTR2 { x, y } => self.notr2(x, y),
+            NEGI { x, immediate } => self.negi(x, immediate),
+            NEGR1 { x } => self.negr1(x),
+            NEGR2 { x, y } => self.negr2(x, y),
         };
     }
 
@@ -550,7 +277,6 @@ impl Cpu {
         self.registers[x] = self.memory.read(address);
     }
 
-    // TODO: Rename to ptr_y?
     fn ldmr(&mut self, x: u8, y: u8) {
         self.registers[x] = self.memory.read(self.registers[y]);
     }
@@ -617,7 +343,7 @@ impl Cpu {
 
     fn andr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_and(self.registers[x], self.registers[y]);
-        self.registers[x] = self.registers[x] & self.registers[y];
+        self.registers[z] = self.registers[x] & self.registers[y];
     }
 
     fn tsti(&mut self, x: u8, immediate: u16) {
@@ -640,7 +366,7 @@ impl Cpu {
 
     fn orr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_or(self.registers[x], self.registers[y]);
-        self.registers[x] = self.registers[x] | self.registers[y];
+        self.registers[z] = self.registers[x] | self.registers[y];
     }
 
     fn xori(&mut self, x: u8, immediate: u16) {
@@ -655,7 +381,7 @@ impl Cpu {
 
     fn xorr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_xor(self.registers[x], self.registers[y]);
-        self.registers[x] = self.registers[x] ^ self.registers[y];
+        self.registers[z] = self.registers[x] ^ self.registers[y];
     }
 
     fn muli(&mut self, x: u8, immediate: u16) {
@@ -758,33 +484,78 @@ impl Cpu {
     }
 
     fn pushall(&mut self) {
-        // TODO: Implement indexing Registers with RangeFull and writing memory with &[u8].
-        // self.memory.write(self.stack_pointer, self.registers[..]);
-        // self.stack_pointer += 32;
+        for i in 0..16u8 {
+            self.memory.write(self.stack_pointer, self.registers[i]);
+            self.stack_pointer += 2;
+        }
     }
 
-    fn popall(&mut self) {}
+    fn popall(&mut self) {
+        for i in (0..16u8).rev() {
+            self.stack_pointer -= 2;
+            self.registers[i] = self.memory.read(self.stack_pointer);
+        }
+    }
 
     fn pushf(&mut self) {
-        // TODO: Is there a better way to implement From or write this syntax.
         let flags: u8 = (&self.flags).into();
         self.memory.write(self.stack_pointer, flags);
         self.stack_pointer += 2;
     }
 
     fn popf(&mut self) {
-        // TODO: Is there a better way to implement From or write this syntax.
         self.stack_pointer -= 2;
         let flags: u8 = self.memory.read(self.stack_pointer);
         self.flags = flags.into();
     }
 
-    fn pali(&mut self, address: u16) {}
-    fn palr(&mut self, x: u8) {}
-    fn noti(&mut self, x: u8, immediate: u16) {}
-    fn notr1(&mut self, x: u8) {}
-    fn notr2(&mut self, x: u8, y: u8) {}
-    fn negi(&mut self, x: u8, immediate: u16) {}
-    fn negr1(&mut self, x: u8) {}
-    fn negr2(&mut self, x: u8, y: u8) {}
+    fn pali(&mut self, address: u16) {
+        // TODO: Make palette a struct, and implement Read<I, Palette> for Memory.
+        for i in 0..16u16 {
+            let address = address + 3 * i;
+            self.palette[i as usize].0 = self.memory.read(address);
+            self.palette[i as usize].1 = self.memory.read(address + 1);
+            self.palette[i as usize].2 = self.memory.read(address + 2);
+        }
+    }
+
+    fn palr(&mut self, x: u8) {
+        // TODO: Make palette a struct, and implement Read<I, Palette> for Memory.
+        for i in 0..16u16 {
+            let address = self.registers[x] + 3 * i;
+            self.palette[i as usize].0 = self.memory.read(address);
+            self.palette[i as usize].1 = self.memory.read(address + 1);
+            self.palette[i as usize].2 = self.memory.read(address + 2);
+        }
+    }
+
+    fn noti(&mut self, x: u8, immediate: u16) {
+        self.flags.set_on_not(immediate);
+        self.registers[x] = !immediate;
+    }
+
+    fn notr1(&mut self, x: u8) {
+        self.flags.set_on_not(self.registers[x]);
+        self.registers[x] = !self.registers[x];
+    }
+
+    fn notr2(&mut self, x: u8, y: u8) {
+        self.flags.set_on_not(self.registers[y]);
+        self.registers[x] = !self.registers[y];
+    }
+
+    fn negi(&mut self, x: u8, immediate: u16) {
+        self.flags.set_on_neg(immediate);
+        self.registers[x] = -(immediate as i16) as u16;
+    }
+
+    fn negr1(&mut self, x: u8) {
+        self.flags.set_on_neg(self.registers[x]);
+        self.registers[x] = -(self.registers[x] as i16) as u16;
+    }
+
+    fn negr2(&mut self, x: u8, y: u8) {
+        self.flags.set_on_neg(self.registers[y]);
+        self.registers[x] = -(self.registers[y] as i16) as u16;
+    }
 }
