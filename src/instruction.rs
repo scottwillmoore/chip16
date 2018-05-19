@@ -266,6 +266,11 @@ impl Instruction {
         }
     }
 
+    pub fn encode(&self) -> u32 {
+        // NOTE: This could be handy...
+        0
+    }
+
     pub fn disassemble(&self) -> String {
         #[cfg_attr(rustfmt, rustfmt_skip)]
         match self {
