@@ -104,10 +104,10 @@ impl Flags {
     }
 
     pub fn set_on_not(&mut self, a: u16) {
-        let result = !a;
+        let signed_result = !a as i16;
 
-        self.zero = result == 0;
-        self.negative = result < 0;
+        self.zero = signed_result == 0;
+        self.negative = signed_result < 0;
     }
 
     pub fn set_on_neg(&mut self, a: u16) {
