@@ -1,23 +1,23 @@
-use std::io::Read;
 use byteorder::{LittleEndian, ReadBytesExt};
 use crc::{Hasher32, crc32};
+use std::io::Read;
 
 const MAGIC_NUMBER: &[u8; 4] = b"CH16";
 const CRC32_POLYNOMIAL: u32 = 0x04C11DB7;
 
-enum RomFormat {
+pub enum RomFormat {
     Raw,
     Chip16,
 }
 
-struct Version(u8, u8);
+pub struct Version(u8, u8);
 
 pub struct Rom {
-    format: RomFormat,
-    version: Option<Version>,
-    size: u32,
-    start_address: u16,
-    contents: Vec<u8>,
+    pub format: RomFormat,
+    pub version: Option<Version>,
+    pub size: u32,
+    pub start_address: u16,
+    pub contents: Vec<u8>,
 }
 
 impl Rom {
@@ -26,7 +26,7 @@ impl Rom {
     // TODO: Consume the reader, instead of using a mutable reference.
     // NOTE: The read functions already completely consume the reader with read_to_end.
     // TODO: Is read the best function name for this constructor? Consider new, from, etc.
-    pub fn read<R: Read>(reader: &mut R) -> Rom {
+    pub fn read<R: Read>(mut reader: R) -> Rom {
         let mut signature: [u8; 4] = [0; 4];
         reader.read_exact(&mut signature).unwrap();
 
@@ -36,7 +36,7 @@ impl Rom {
         }
     }
 
-    fn read_raw<R: Read>(reader: &mut R) -> Rom {
+    fn read_raw<R: Read>(mut reader: R) -> Rom {
         let mut contents = Vec::new();
         reader.read_to_end(&mut contents).unwrap();
 
@@ -51,7 +51,7 @@ impl Rom {
         }
     }
 
-    fn read_chip16<R: Read>(reader: &mut R) -> Rom {
+    fn read_chip16<R: Read>(mut reader: R) -> Rom {
         let version = reader.read_u8().unwrap();
         let version_major = version & 0xF0 >> 4;
         let version_minor = version & 0x0F;
