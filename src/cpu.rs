@@ -153,104 +153,127 @@ impl Cpu {
         };
     }
 
+    #[inline]
     fn nop(&mut self) {}
 
+    #[inline]
     fn cls(&mut self) {
         self.background = 0;
         self.video_memory.clear();
     }
 
+    #[inline]
     fn vblnk(&mut self) {
         // TODO
     }
 
+    #[inline]
     fn bgc(&mut self, n: u8) {
         self.background = n;
     }
 
+    #[inline]
     fn spr(&mut self, width: u8, height: u8) {
         self.sprite_width = width;
         self.sprite_height = height;
     }
 
+    #[inline]
     fn drwi(&mut self, x: u8, y: u8, address: u16) {
         // TODO
     }
 
+    #[inline]
     fn drwr(&mut self, x: u8, y: u8, z: u8) {
         // TODO
     }
 
+    #[inline]
     fn rnd(&mut self, x: u8, address: u16) {
         // TODO
     }
 
+    #[inline]
     fn flip(&mut self, flip_horizontal: bool, flip_vertical: bool) {
         self.flip_horizontal = flip_horizontal;
         self.flip_vertical = flip_vertical;
     }
 
+    #[inline]
     fn snd0(&mut self) {
         // TODO
     }
 
+    #[inline]
     fn snd1(&mut self, address: u16) {
         // TODO
     }
 
+    #[inline]
     fn snd2(&mut self, address: u16) {
         // TODO
     }
 
+    #[inline]
     fn snd3(&mut self, address: u16) {
         // TODO
     }
 
+    #[inline]
     fn snp(&mut self, x: u8, address: u16) {
         // TODO
     }
 
+    #[inline]
     fn sng(&mut self, attack: u8, decay: u8, sustain: u8, release: u8, volume: u8, wave: u8) {
         // TODO
     }
 
+    #[inline]
     fn jmpi(&mut self, address: u16) {
         self.program_counter = address;
     }
 
+    #[inline]
     fn jmc(&mut self, address: u16) {
         if self.flags.carry {
             self.program_counter = address;
         }
     }
 
+    #[inline]
     fn jx(&mut self, condition: &Condition, address: u16) {
         if self.test(condition) {
             self.program_counter = address;
         }
     }
 
+    #[inline]
     fn jme(&mut self, x: u8, y: u8, address: u16) {
         if self.registers[x] == self.registers[y] {
             self.program_counter = address;
         }
     }
 
+    #[inline]
     fn calli(&mut self, address: u16) {
         self.memory.write(self.stack_pointer, self.program_counter);
         self.stack_pointer += 2;
         self.program_counter = address;
     }
 
+    #[inline]
     fn ret(&mut self) {
         self.stack_pointer -= 2;
         self.program_counter = self.memory.read(self.stack_pointer);
     }
 
+    #[inline]
     fn jmpr(&mut self, x: u8) {
         self.program_counter = self.registers[x];
     }
 
+    #[inline]
     fn cx(&mut self, condition: &Condition, address: u16) {
         if self.test(condition) {
             self.memory.write(self.stack_pointer, self.program_counter);
@@ -259,230 +282,278 @@ impl Cpu {
         }
     }
 
+    #[inline]
     fn callr(&mut self, x: u8) {
         self.memory.write(self.stack_pointer, self.program_counter);
         self.stack_pointer += 2;
         self.program_counter = self.registers[x];
     }
 
+    #[inline]
     fn ldir(&mut self, x: u8, immediate: u16) {
         self.registers[x] = immediate;
     }
 
+    #[inline]
     fn ldis(&mut self, immediate: u16) {
         self.stack_pointer = immediate;
     }
 
+    #[inline]
     fn ldmi(&mut self, x: u8, address: u16) {
         self.registers[x] = self.memory.read(address);
     }
 
+    #[inline]
     fn ldmr(&mut self, x: u8, y: u8) {
         self.registers[x] = self.memory.read(self.registers[y]);
     }
 
+    #[inline]
     fn mov(&mut self, x: u8, y: u8) {
         self.registers[x] = self.registers[y];
     }
 
+    #[inline]
     fn stmi(&mut self, x: u8, address: u16) {
         self.memory.write(address, self.registers[x]);
     }
 
+    #[inline]
     fn stmr(&mut self, x: u8, y: u8) {
         self.memory.write(self.registers[y], self.registers[x]);
     }
 
+    #[inline]
     fn addi(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_add(self.registers[x], immediate);
         self.registers[x] = u16::wrapping_add(self.registers[x], immediate);
     }
 
+    #[inline]
     fn addr2(&mut self, x: u8, y: u8) {
         self.flags.set_on_add(self.registers[x], self.registers[y]);
         self.registers[x] = u16::wrapping_add(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn addr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_add(self.registers[x], self.registers[y]);
         self.registers[z] = u16::wrapping_add(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn subi(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_sub(self.registers[x], immediate);
         self.registers[x] = u16::wrapping_sub(self.registers[x], immediate);
     }
 
+    #[inline]
     fn subr2(&mut self, x: u8, y: u8) {
         self.flags.set_on_sub(self.registers[x], self.registers[y]);
         self.registers[x] = u16::wrapping_sub(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn subr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_sub(self.registers[x], self.registers[y]);
         self.registers[z] = u16::wrapping_sub(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn cmpi(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_sub(self.registers[x], immediate);
     }
 
+    #[inline]
     fn cmpr(&mut self, x: u8, y: u8) {
         self.flags.set_on_sub(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn andi(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_and(self.registers[x], immediate);
         self.registers[x] = self.registers[x] & immediate;
     }
 
+    #[inline]
     fn andr2(&mut self, x: u8, y: u8) {
         self.flags.set_on_and(self.registers[x], self.registers[y]);
         self.registers[x] = self.registers[x] & self.registers[y];
     }
 
+    #[inline]
     fn andr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_and(self.registers[x], self.registers[y]);
         self.registers[z] = self.registers[x] & self.registers[y];
     }
 
+    #[inline]
     fn tsti(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_and(self.registers[x], immediate);
     }
 
+    #[inline]
     fn tstr(&mut self, x: u8, y: u8) {
         self.flags.set_on_and(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn ori(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_or(self.registers[x], immediate);
         self.registers[x] = self.registers[x] | immediate;
     }
 
+    #[inline]
     fn orr2(&mut self, x: u8, y: u8) {
         self.flags.set_on_or(self.registers[x], self.registers[y]);
         self.registers[x] = self.registers[x] | self.registers[y];
     }
 
+    #[inline]
     fn orr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_or(self.registers[x], self.registers[y]);
         self.registers[z] = self.registers[x] | self.registers[y];
     }
 
+    #[inline]
     fn xori(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_xor(self.registers[x], immediate);
         self.registers[x] = self.registers[x] ^ immediate;
     }
 
+    #[inline]
     fn xorr2(&mut self, x: u8, y: u8) {
         self.flags.set_on_xor(self.registers[x], self.registers[y]);
         self.registers[x] = self.registers[x] ^ self.registers[y];
     }
 
+    #[inline]
     fn xorr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_xor(self.registers[x], self.registers[y]);
         self.registers[z] = self.registers[x] ^ self.registers[y];
     }
 
+    #[inline]
     fn muli(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_mul(self.registers[x], immediate);
         self.registers[x] = u16::wrapping_mul(self.registers[x], immediate);
     }
 
+    #[inline]
     fn mulr2(&mut self, x: u8, y: u8) {
         self.flags.set_on_mul(self.registers[x], self.registers[y]);
         self.registers[x] = u16::wrapping_mul(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn mulr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_mul(self.registers[x], self.registers[y]);
         self.registers[z] = u16::wrapping_mul(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn divi(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_div(self.registers[x], immediate);
         self.registers[x] = u16::wrapping_div(self.registers[x], immediate);
     }
 
+    #[inline]
     fn divr2(&mut self, x: u8, y: u8) {
         self.flags.set_on_div(self.registers[x], self.registers[y]);
         self.registers[x] = u16::wrapping_div(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn divr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_div(self.registers[x], self.registers[y]);
         self.registers[z] = u16::wrapping_div(self.registers[x], self.registers[y]);
     }
 
     // TODO: What is the difference between mod and rem?
+    #[inline]
     fn modi(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_mod(self.registers[x], immediate);
         // self.registers[x] = u16::wrapping_mod(self.registers[x], immediate);
     }
 
+    #[inline]
     fn modr2(&mut self, x: u8, y: u8) {
         self.flags.set_on_mod(self.registers[x], self.registers[y]);
         // self.registers[x] = u16::wrapping_mod(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn modr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_mod(self.registers[x], self.registers[y]);
         // self.registers[z] = u16::wrapping_mod(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn remi(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_rem(self.registers[x], immediate);
         self.registers[x] = u16::wrapping_rem(self.registers[x], immediate);
     }
 
+    #[inline]
     fn remr2(&mut self, x: u8, y: u8) {
         self.flags.set_on_rem(self.registers[x], self.registers[y]);
         self.registers[x] = u16::wrapping_rem(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn remr3(&mut self, x: u8, y: u8, z: u8) {
         self.flags.set_on_rem(self.registers[x], self.registers[y]);
         self.registers[z] = u16::wrapping_rem(self.registers[x], self.registers[y]);
     }
 
+    #[inline]
     fn shln(&mut self, x: u8, n: u8) {
         self.flags.set_on_shl(self.registers[x], n.into());
         self.registers[x] = u16::wrapping_shl(self.registers[x], n.into());
     }
 
+    #[inline]
     fn shrn(&mut self, x: u8, n: u8) {
         self.flags.set_on_shr(self.registers[x], n.into());
         self.registers[x] = u16::wrapping_shr(self.registers[x], n.into());
     }
 
+    #[inline]
     fn sarn(&mut self, x: u8, n: u8) {
         // TODO
     }
 
+    #[inline]
     fn shlr(&mut self, x: u8, y: u8) {
         self.flags.set_on_shl(self.registers[x], self.registers[y]);
         self.registers[x] = u16::wrapping_shl(self.registers[x], self.registers[y].into());
     }
 
+    #[inline]
     fn shrr(&mut self, x: u8, y: u8) {
         self.flags.set_on_shl(self.registers[x], self.registers[y]);
         self.registers[x] = u16::wrapping_shl(self.registers[x], self.registers[y].into());
     }
 
+    #[inline]
     fn sarr(&mut self, x: u8, y: u8) {
         // TODO
     }
 
+    #[inline]
     fn push(&mut self, x: u8) {
         self.memory.write(self.stack_pointer, self.registers[x]);
         self.stack_pointer += 2;
     }
 
+    #[inline]
     fn pop(&mut self, x: u8) {
         self.stack_pointer -= 2;
         self.registers[x] = self.memory.read(self.stack_pointer);
     }
 
+    #[inline]
     fn pushall(&mut self) {
         for i in 0..16u8 {
             self.memory.write(self.stack_pointer, self.registers[i]);
@@ -490,6 +561,7 @@ impl Cpu {
         }
     }
 
+    #[inline]
     fn popall(&mut self) {
         for i in (0..16u8).rev() {
             self.stack_pointer -= 2;
@@ -497,18 +569,21 @@ impl Cpu {
         }
     }
 
+    #[inline]
     fn pushf(&mut self) {
         let flags: u8 = (&self.flags).into();
         self.memory.write(self.stack_pointer, flags);
         self.stack_pointer += 2;
     }
 
+    #[inline]
     fn popf(&mut self) {
         self.stack_pointer -= 2;
         let flags: u8 = self.memory.read(self.stack_pointer);
         self.flags = flags.into();
     }
 
+    #[inline]
     fn pali(&mut self, address: u16) {
         // TODO: Make palette a struct, and implement Read<I, Palette> for Memory.
         for i in 0..16u16 {
@@ -519,6 +594,7 @@ impl Cpu {
         }
     }
 
+    #[inline]
     fn palr(&mut self, x: u8) {
         // TODO: Make palette a struct, and implement Read<I, Palette> for Memory.
         for i in 0..16u16 {
@@ -529,31 +605,37 @@ impl Cpu {
         }
     }
 
+    #[inline]
     fn noti(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_not(immediate);
         self.registers[x] = !immediate;
     }
 
+    #[inline]
     fn notr1(&mut self, x: u8) {
         self.flags.set_on_not(self.registers[x]);
         self.registers[x] = !self.registers[x];
     }
 
+    #[inline]
     fn notr2(&mut self, x: u8, y: u8) {
         self.flags.set_on_not(self.registers[y]);
         self.registers[x] = !self.registers[y];
     }
 
+    #[inline]
     fn negi(&mut self, x: u8, immediate: u16) {
         self.flags.set_on_neg(immediate);
         self.registers[x] = -(immediate as i16) as u16;
     }
 
+    #[inline]
     fn negr1(&mut self, x: u8) {
         self.flags.set_on_neg(self.registers[x]);
         self.registers[x] = -(self.registers[x] as i16) as u16;
     }
 
+    #[inline]
     fn negr2(&mut self, x: u8, y: u8) {
         self.flags.set_on_neg(self.registers[y]);
         self.registers[x] = -(self.registers[y] as i16) as u16;

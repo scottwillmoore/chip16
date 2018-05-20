@@ -7,39 +7,39 @@ struct Opcode(u32);
 impl Opcode {
     // Words.
     // hhll = 00 00 HH LL
-    #[inline(always)] fn hhll(&self) -> u16 { (self.0 & 0xFFFF) as u16 }
+    #[inline] fn hhll(&self) -> u16 { (self.0 & 0xFFFF) as u16 }
 
     // Bytes.
     // ii = II 00 00 00
-    #[inline(always)] fn ii(&self) -> u8 { (self.0 & 0xFF000000 >> 24) as u8 }
+    #[inline] fn ii(&self) -> u8 { (self.0 & 0xFF000000 >> 24) as u8 }
     // hh = 00 00 HH 00
-    #[inline(always)] fn hh(&self) -> u8 { (self.0 & 0xFF00 >> 8) as u8 }
+    #[inline] fn hh(&self) -> u8 { (self.0 & 0xFF00 >> 8) as u8 }
     // ll = 00 00 00 LL
-    #[inline(always)] fn ll(&self) -> u8 { (self.0 & 0xFF) as u8 }
+    #[inline] fn ll(&self) -> u8 { (self.0 & 0xFF) as u8 }
 
     // Nibbles.
     // ad = 00 A0 00 00
-    #[inline(always)] fn a(&self) -> u8 { (self.0 & 0xF00000 >> 20) as u8 }
+    #[inline] fn a(&self) -> u8 { (self.0 & 0xF00000 >> 20) as u8 }
     // ad = 00 0D 00 00
-    #[inline(always)] fn d(&self) -> u8 { (self.0 & 0xF0000 >> 16) as u8 }
+    #[inline] fn d(&self) -> u8 { (self.0 & 0xF0000 >> 16) as u8 }
     // sr = 00 00 S0 00
-    #[inline(always)] fn s(&self) -> u8 { (self.0 & 0xF000 >> 12) as u8 }
+    #[inline] fn s(&self) -> u8 { (self.0 & 0xF000 >> 12) as u8 }
     // sr = 00 00 0R 00
-    #[inline(always)] fn r(&self) -> u8 { (self.0 & 0xF00 >> 8) as u8 }
+    #[inline] fn r(&self) -> u8 { (self.0 & 0xF00 >> 8) as u8 }
     // vt = 00 00 00 V0
-    #[inline(always)] fn v(&self) -> u8 { (self.0 & 0xF0 >> 4) as u8 }
+    #[inline] fn v(&self) -> u8 { (self.0 & 0xF0 >> 4) as u8 }
     // vt = 00 00 00 0T
-    #[inline(always)] fn t(&self) -> u8 { (self.0 & 0xF) as u8 }
+    #[inline] fn t(&self) -> u8 { (self.0 & 0xF) as u8 }
     // x = 00 0X 00 00
-    #[inline(always)] fn x(&self) -> u8 { (self.0 & 0xF0000 >> 16) as u8 }
+    #[inline] fn x(&self) -> u8 { (self.0 & 0xF0000 >> 16) as u8 }
     // y = 00 Y0 00 00
-    #[inline(always)] fn y(&self) -> u8 { (self.0 & 0xF00000 >> 20) as u8 }
+    #[inline] fn y(&self) -> u8 { (self.0 & 0xF00000 >> 20) as u8 }
     // z = 00 00 Z0 00
-    #[inline(always)] fn z(&self) -> u8 { (self.0 & 0xF000 >> 12) as u8 }
+    #[inline] fn z(&self) -> u8 { (self.0 & 0xF000 >> 12) as u8 }
     // n = 00 00 N0 00
-    #[inline(always)] fn n(&self) -> u8 { (self.0 & 0xF000 >> 12) as u8 }
+    #[inline] fn n(&self) -> u8 { (self.0 & 0xF000 >> 12) as u8 }
     // c = 00 0x 00 00
-    #[inline(always)] fn c(&self) -> Condition { Condition::decode(self.x()).unwrap() }
+    #[inline] fn c(&self) -> Condition { Condition::decode(self.x()).unwrap() }
 }
 
 pub enum Condition {
