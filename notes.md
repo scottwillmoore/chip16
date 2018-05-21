@@ -13,6 +13,11 @@ https://play.rust-lang.org/?gist=8817e7dbcde8160bbf6f953f98ff6199&version=stable
 TASKS.
 --------------------
 
+Todo: Continue to work on errors throught Rom struct.
+I believe there are many errors that are not handled with proper context.
+This could be easily discovered/fixed by ensuring proper test coverage.
+Create some real dodgy roms for testing purposes.
+
 Proposal: Rename 'address' in the (some/all) of the instructions to immediate.
 Especially for the LD and ST instructions.
 You could use address, immediate and indirect, etc. Be more descriptive.
