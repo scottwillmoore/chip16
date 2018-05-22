@@ -18,10 +18,6 @@ I believe there are many errors that are not handled with proper context.
 This could be easily discovered/fixed by ensuring proper test coverage.
 Create some real dodgy roms for testing purposes.
 
-Proposal: Rename 'address' in the (some/all) of the instructions to immediate.
-Especially for the LD and ST instructions.
-You could use address, immediate and indirect, etc. Be more descriptive.
-
 Todo: Include opcode information in errors. E.g. What specific opcode failed?
 
 Todo: Use the existing mash16 emulator to test current implementation.
@@ -34,6 +30,8 @@ Todo: Ensure functions exit gracefully and use errors. This should appear in pub
 
 Todo: Create a c16 diassembler. This should be in a seperate module.
 
+Maybe: Explore using macros to generate the chip16 instruction parsing, disassembly, assembly?
+
 Maybe: Implement a way to be faithful to c16 versions.
 E.g. Do not execute version 1.3 instructions for a 1.1 c16 binary.
 
@@ -41,6 +39,11 @@ Maybe: Create a c16 assembler.
 
 COMPLETED.
 --------------------
+
+Proposal: Rename 'address' in the (some/all) of the instructions to immediate.
+Especially for the LD and ST instructions.
+You could use address, immediate and indirect, etc. Be more descriptive.
+Done.
 
 Done. Implement structs for memory, registers, palette, etc.
 ````rust
