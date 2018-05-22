@@ -7,24 +7,23 @@ pub struct Flags {
 }
 
 impl Flags {
-    // TODO: Refractor internal function variable names.
     pub fn set_on_add(&mut self, a: u16, b: u16) {
-        let (_, c) = a.overflowing_add(b);
-        let (signed_result, o) = (a as i16).overflowing_add(b as i16);
+        let (_, carry) = a.overflowing_add(b);
+        let (signed_result, overflow) = (a as i16).overflowing_add(b as i16);
 
-        self.carry = c;
+        self.carry = carry;
         self.zero = signed_result == 0;
-        self.overflow = o;
+        self.overflow = overflow;
         self.negative = signed_result < 0;
     }
 
     pub fn set_on_sub(&mut self, a: u16, b: u16) {
-        let (_, c) = a.overflowing_sub(b);
-        let (signed_result, o) = (a as i16).overflowing_sub(b as i16);
+        let (_, carry) = a.overflowing_sub(b);
+        let (signed_result, overflow) = (a as i16).overflowing_sub(b as i16);
 
-        self.carry = c;
+        self.carry = carry;
         self.zero = signed_result == 0;
-        self.overflow = o;
+        self.overflow = overflow;
         self.negative = signed_result < 0;
     }
 
@@ -50,19 +49,19 @@ impl Flags {
     }
 
     pub fn set_on_mul(&mut self, a: u16, b: u16) {
-        let (_, c) = a.overflowing_mul(b);
+        let (_, carry) = a.overflowing_mul(b);
         let (signed_result, _) = (a as i16).overflowing_mul(b as i16);
 
-        self.carry = c;
+        self.carry = carry;
         self.zero = signed_result == 0;
         self.negative = signed_result < 0;
     }
 
     pub fn set_on_div(&mut self, a: u16, b: u16) {
-        let (_, c) = a.overflowing_div(b);
+        let (_, carry) = a.overflowing_div(b);
         let (signed_result, _) = (a as i16).overflowing_div(b as i16);
 
-        self.carry = c;
+        self.carry = carry;
         self.zero = signed_result == 0;
         self.negative = signed_result < 0;
     }
