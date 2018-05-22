@@ -1,3 +1,4 @@
+use failure::{err_msg, Error};
 use flags::Flags;
 use instruction::{Condition, Instruction};
 use memory::{Memory, Read, Write};
@@ -30,17 +31,18 @@ impl Cpu {
         }
     }
 
-    pub fn step(&mut self) {
-        // TODO: Handle errors that fetch could possibly throw.
-        let instruction = self.fetch();
+    pub fn step(&mut self) -> Result<(), Error> {
+        let instruction = self.fetch()?;
         self.program_counter += 4;
 
         self.execute(instruction);
+
+        Ok(())
     }
 
-    pub fn fetch(&self) -> Instruction {
+    pub fn fetch(&self) -> Result<Instruction, Error> {
         let opcode = self.memory.read(self.program_counter);
-        Instruction::decode(opcode).unwrap()
+        Instruction::decode(opcode)
     }
 
     pub fn test(&self, condition: &Condition) -> bool {
@@ -64,6 +66,7 @@ impl Cpu {
     }
 
     pub fn execute(&mut self, instruction: Instruction) {
+        // NOTE: This currently does not throw any errors, but possibly will in the future.
         // NOTE: Currently this function consumes the instruction.
         // This may not be what we want... But the other ways are ugly...
         #[cfg_attr(rustfmt, rustfmt_skip)]

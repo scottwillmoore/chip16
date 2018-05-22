@@ -1,3 +1,5 @@
+use failure::{err_msg, Error};
+
 use self::Condition::*;
 use self::Instruction::*;
 
@@ -61,7 +63,7 @@ pub enum Condition {
 }
 
 impl Condition {
-    pub fn decode(x: u8) -> Result<Condition, &'static str> {
+    pub fn decode(x: u8) -> Result<Condition, Error> {
         match x {
             0x0 => Ok(Z),
             0x1 => Ok(NZ),
@@ -78,7 +80,7 @@ impl Condition {
             0xC => Ok(GE),
             0xD => Ok(L),
             0xE => Ok(LE),
-            _ => Err("Failed to decode byte into a condition."),
+            _ => Err(err_msg("failed to decode byte into a condition")),
         }
     }
 
@@ -190,7 +192,7 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn decode(opcode: u32) -> Result<Instruction, &'static str> {
+    pub fn decode(opcode: u32) -> Result<Instruction, Error> {
         // Wrap opcode in struct with inline methods.
         let opcode = Opcode(opcode);
 
@@ -282,7 +284,7 @@ impl Instruction {
             0xE3 => Ok(NEGI { x: opcode.x(), immediate: opcode.hhll() }),
             0xE4 => Ok(NEGR1 { x: opcode.x() }),
             0xE5 => Ok(NEGR2 { x: opcode.x(), y: opcode.y() }),
-            _ => Err("Failed to decode opcode into an instruction."),
+            _ => Err(err_msg("failed to decode opcode into an instruction")),
         }
     }
 
@@ -299,7 +301,7 @@ impl Instruction {
             CLS => format!("CLS"),
             VBLNK => format!("VBLNK"),
             BGC { n } => format!("BGC {:01x}", n),
-            SPR { width, height } => format!("SPR"),
+            SPR { width, height } => format!("SPR {:02x}, {:02x}", width, height),
             DRWI { x, y, address } => format!("DRWI {:01x}, {:01x}, {:04x}", x, y, address),
             DRWR { x, y, z } => format!("DRWR {:01x}, {:01x}, {:01x}", x, y, z),
             RND { x, address } => format!("RND {:01x}, {:04x}", x, address),
