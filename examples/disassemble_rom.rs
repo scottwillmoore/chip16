@@ -8,7 +8,6 @@ use std::fs::File;
 
 fn main() {
     let filename = env::args().last().unwrap();
-    println!("{}", filename);
     let file = File::open(filename).unwrap();
     let rom = Rom::new(file).unwrap();
 

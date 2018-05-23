@@ -8,7 +8,7 @@ fn main() {
     let filename = env::args().last().unwrap();
     let mut file = File::open(filename).unwrap();
 
-    let rom = Rom::read(file);
+    let rom = Rom::new(file);
     // let mut memory = Memory::new(rom);
 
     let mut cpu = Cpu::new();
