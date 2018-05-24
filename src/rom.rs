@@ -50,14 +50,9 @@ impl Rom {
         }
     }
 
-    fn read_content<R: Read>(mut reader: R) -> Result<Vec<u8>, Error> {
+    fn decode_raw<R: Read>(mut reader: R) -> Result<Rom, Error> {
         let mut content = Vec::new();
         reader.read_to_end(&mut content)?;
-        Ok(content)
-    }
-
-    fn decode_raw<R: Read>(mut reader: R) -> Result<Rom, Error> {
-        let content = Rom::read_content(reader)?;
         Ok(Rom {
             format: RomFormat::Raw,
             version: None,
@@ -83,7 +78,9 @@ impl Rom {
         );
 
         let checksum = metadata.read_u32::<LittleEndian>()?;
-        let content = Rom::read_content(reader.take(size as u64))?;
+
+        let mut content = Vec::new();
+        reader.take(size as u64).read_to_end(&mut content)?;
         ensure!(
             content.len() == size as usize,
             "the length of content is smaller than size"
