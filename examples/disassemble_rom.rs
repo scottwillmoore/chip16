@@ -12,7 +12,7 @@ fn main() {
     let rom = Rom::new(file).unwrap();
 
     let start_address = rom.start_address as usize;
-    let mut reader = &rom.contents[start_address..];
+    let mut reader = &rom.content[start_address..];
     let mut address = start_address;
 
     while let Ok(opcode) = reader.read_u32::<LittleEndian>() {

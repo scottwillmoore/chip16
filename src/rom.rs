@@ -3,7 +3,6 @@ use crc::{Hasher32, crc32};
 use failure::Error;
 use std::io::Read;
 
-const MAGIC_NUMBER: &[u8; 4] = b"CH16";
 const CRC32_POLYNOMIAL: u32 = 0x04C11DB7;
 
 #[derive(Debug, PartialEq)]
@@ -12,140 +11,115 @@ pub enum RomFormat {
     Chip16,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, PartialOrd)]
 pub struct Version(u8, u8);
 
-#[derive(Debug)]
+impl From<u8> for Version {
+    fn from(byte: u8) -> Version {
+        let major = (byte & 0xF0) >> 4;
+        let minor = byte & 0x0F;
+        Version(major, minor)
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub struct Rom {
     pub format: RomFormat,
     pub version: Option<Version>,
     pub size: u32,
     pub start_address: u16,
-    pub contents: Vec<u8>,
+    pub content: Vec<u8>,
 }
 
 impl Rom {
     pub fn new<R: Read>(mut reader: R) -> Result<Rom, Error> {
-        // TODO: Use a BufReader.
-        // Ensure this works for a raw format of length < 4.
-        // Use the same method in the read_chip16 function for the header.
-        let mut signature: [u8; 4] = [0; 4];
-        reader.read_exact(&mut signature)?;
+        let mut header = [0; 16];
+        let bytes_read = reader.read(&mut header)?;
+        ensure!(bytes_read >= 4, "the rom must be at least 4 bytes");
 
-        match &signature {
-            MAGIC_NUMBER => Rom::new_chip16(reader),
-            _ => Rom::new_raw((&signature).chain(reader)),
+        let (signature, metadata) = (&header[..4], &header[4..]);
+        match signature {
+            b"CH16" => {
+                ensure!(bytes_read == 16, "the header is not 16 bytes");
+                Rom::decode_chip16(metadata, reader)
+            }
+            _ => {
+                let content = header[..bytes_read].chain(reader);
+                Rom::decode_raw(content)
+            }
         }
     }
 
-    fn new_raw<R: Read>(mut reader: R) -> Result<Rom, Error> {
-        let mut contents = Vec::new();
-        reader.read_to_end(&mut contents)?;
+    fn read_content<R: Read>(mut reader: R) -> Result<Vec<u8>, Error> {
+        let mut content = Vec::new();
+        reader.read_to_end(&mut content)?;
+        Ok(content)
+    }
 
+    fn decode_raw<R: Read>(mut reader: R) -> Result<Rom, Error> {
+        let content = Rom::read_content(reader)?;
         Ok(Rom {
             format: RomFormat::Raw,
             version: None,
-            size: contents.len() as u32,
+            size: content.len() as u32,
             start_address: 0,
-            contents,
+            content,
         })
     }
 
-    fn new_chip16<R: Read>(mut reader: R) -> Result<Rom, Error> {
-        let reserved = reader.read_u8()?;
-        ensure!(reserved == 0, "reserved from the header is non-zero");
+    fn decode_chip16<R: Read>(mut metadata: &[u8], mut reader: R) -> Result<Rom, Error> {
+        let reserved = metadata.read_u8()?;
+        ensure!(reserved == 0, "reserved is non-zero");
 
-        let version = reader.read_u8()?;
-        let version_major = (version & 0xF0) >> 4;
-        let version_minor = (version & 0x0F);
+        let version = metadata.read_u8()?;
+        let version = Some(version.into());
 
-        let size = reader.read_u32::<LittleEndian>()?;
-        let start_address = reader.read_u16::<LittleEndian>()?;
+        let size = metadata.read_u32::<LittleEndian>()?;
+        let start_address = metadata.read_u16::<LittleEndian>()?;
+        ensure!(size >= 4, "the rom content must be at least 4 bytes");
         ensure!(
-            (start_address as u32) < size,
-            "start address is not within the bounds of size from the header"
+            size > start_address as u32,
+            "start address is larger than size"
         );
 
-        let checksum = reader.read_u32::<LittleEndian>()?;
-
-        let mut contents = Vec::new();
-        reader.take(size.into()).read_to_end(&mut contents)?;
+        let checksum = metadata.read_u32::<LittleEndian>()?;
+        let content = Rom::read_content(reader.take(size as u64))?;
         ensure!(
-            (size as usize) == contents.len(),
-            "the contents of the rom do not match the size from the header"
+            content.len() == size as usize,
+            "the length of content is smaller than size"
         );
 
         // NOTE: Until the crc crate gets updated we cannot compute the checksum.
         // let mut digest = crc32::Digest::new(CRC32_POLYNOMIAL);
         // digest.write(&contents[..]);
-        // ensure!(
-        //     digest.sum32() == checksum,
-        //     "the computed checksum does not match the checksum from the header"
-        // );
+        // ensure!(digest.sum32() == checksum, "the checksum is invalid");
 
         Ok(Rom {
             format: RomFormat::Chip16,
-            version: Some(Version(version_major, version_minor)),
+            version,
             size,
             start_address,
-            contents,
+            content,
         })
     }
 }
 
-// TODO: Add test for wrong_checksum.
-// TODO: Might be able to minimise line length by interpolating the header.
-// E.g. [ ..header, 0x00, ...]. Does this work??? Or is there an equivalent.
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    macro_rules! assert_rom {
-        (
-            $data:expr,
-            $format:expr,
-            $version:expr,
-            $size:expr,
-            $start_address:expr,
-            $contents:expr
-        ) => {
-            let rom = Rom::new($data).unwrap();
-            assert!(rom.format == $format);
-            assert!(rom.version == $version);
-            assert!(rom.size == $size);
-            assert!(rom.start_address == $start_address);
-            assert!(rom.contents == $contents);
-        };
-    }
-
-    macro_rules! test_raw {
-        ($func:ident, $data:expr) => {
+    macro_rules! test_assert_rom {
+        ($func:ident, $reader:expr, $rom:expr) => {
             #[test]
             fn $func() {
-                let size = $data.len() as u32;
-                assert_rom!($data, RomFormat::Raw, None, size, 0, $data);
+                let rom = Rom::new($reader).unwrap();
+                println!("{:?}", rom);
+                assert!(rom == $rom);
             }
         };
     }
 
-    macro_rules! test_chip16 {
-        ($func:ident, $version:expr, $size:expr, $start_address:expr, $data:expr) => {
-            #[test]
-            fn $func() {
-                let contents = &$data[16..][..$size];
-                assert_rom!(
-                    $data,
-                    RomFormat::Chip16,
-                    Some($version),
-                    $size,
-                    $start_address,
-                    contents
-                );
-            }
-        };
-    }
-
-    macro_rules! test_chip16_error {
+    macro_rules! test_assert_error {
         ($func:ident, $data:expr) => {
             #[test]
             fn $func() {
@@ -156,30 +130,40 @@ mod tests {
     }
 
     #[cfg_attr(rustfmt, rustfmt_skip)]
-    const ROM_EMPTY: &[u8] = &[
-        0x43, 0x48, 0x31, 0x36, 0x00, 0x12, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0xA7, 0x03, 0x1A, 0xC5,
-    ];
-
-    #[cfg_attr(rustfmt, rustfmt_skip)]
-    const ROM_ONE_BYTE: &[u8] = &[
-        0x43, 0x48, 0x31, 0x36, 0x00, 0x12, 0x01, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0xA7, 0x03, 0x1A, 0xC5,
-
-        0x00,
-    ];
-
-    #[cfg_attr(rustfmt, rustfmt_skip)]
     const ROM_ONE_INSTRUCTION: &[u8] = &[
         0x43, 0x48, 0x31, 0x36, 0x00, 0x12, 0x04, 0x00,
         0x00, 0x00, 0x00, 0x00, 0xA7, 0x03, 0x1A, 0xC5,
 
-        0x00, 0x00, 0x00, 0x00,
+        0x01, 0x02, 0x03, 0x04,
     ];
+
+    test_assert_rom!(
+        raw_one_instruction,
+        &ROM_ONE_INSTRUCTION[16..],
+        Rom {
+            format: RomFormat::Raw,
+            version: None,
+            size: 4,
+            start_address: 0,
+            content: ROM_ONE_INSTRUCTION[16..(16 + 4)].to_vec(),
+        }
+    );
+
+    test_assert_rom!(
+        chip16_one_instruction,
+        &ROM_ONE_INSTRUCTION[..],
+        Rom {
+            format: RomFormat::Chip16,
+            version: Some(Version(1, 2)),
+            size: 4,
+            start_address: 0,
+            content: ROM_ONE_INSTRUCTION[16..(16 + 4)].to_vec(),
+        }
+    );
 
     #[cfg_attr(rustfmt, rustfmt_skip)]
     const ROM_MAZE: &[u8] = &[
-        0x43, 0x48, 0x31, 0x36, 0x00, 0x12, 0xD8, 0x00,
+        0x43, 0x48, 0x31, 0x36, 0x00, 0x11, 0xD8, 0x00,
         0x00, 0x00, 0x00, 0x00, 0xA7, 0x03, 0x1A, 0xC5,
 
         0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x01, 0x02,
@@ -211,32 +195,67 @@ mod tests {
         0x10, 0x00, 0x3C, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
     ];
 
-    test_raw!(raw_empty, &ROM_EMPTY[16..]);
-    test_raw!(raw_one_byte, &ROM_ONE_BYTE[16..]);
-    test_raw!(raw_one_instruction, &ROM_ONE_INSTRUCTION[16..]);
-    test_raw!(raw_maze, &ROM_MAZE[16..]);
-
-    test_chip16!(chip16_empty, Version(1, 2), 0, 0, ROM_EMPTY);
-    test_chip16!(chip16_one_byte, Version(1, 2), 1, 0, ROM_ONE_BYTE);
-    test_chip16!(
-        chip16_one_instruction,
-        Version(1, 2),
-        4,
-        0,
-        ROM_ONE_INSTRUCTION
+    test_assert_rom!(
+        raw_maze,
+        &ROM_MAZE[16..],
+        Rom {
+            format: RomFormat::Raw,
+            version: None,
+            size: 216,
+            start_address: 0,
+            content: ROM_MAZE[16..(16 + 216)].to_vec(),
+        }
     );
-    test_chip16!(chip16_maze, Version(1, 2), 0xD8, 0, ROM_MAZE);
+
+    test_assert_rom!(
+        chip16_maze,
+        &ROM_MAZE[..],
+        Rom {
+            format: RomFormat::Chip16,
+            version: Some(Version(1, 1)),
+            size: 216,
+            start_address: 0,
+            content: ROM_MAZE[16..(16 + 216)].to_vec(),
+        }
+    );
+
+    #[cfg_attr(rustfmt, rustfmt_skip)]
+    const ROM_EMPTY: &[u8] = &[
+        0x43, 0x48, 0x31, 0x36, 0x00, 0x12, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0xA7, 0x03, 0x1A, 0xC5,
+    ];
+
+    test_assert_error!(raw_empty, &ROM_EMPTY[16..]);
+    test_assert_error!(chip16_empty, &ROM_EMPTY[..]);
+
+    #[cfg_attr(rustfmt, rustfmt_skip)]
+    const ROM_ONE_BYTE: &[u8] = &[
+        0x43, 0x48, 0x31, 0x36, 0x00, 0x12, 0x01, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0xA7, 0x03, 0x1A, 0xC5,
+
+        0x01,
+    ];
+
+    test_assert_error!(raw_one_byte, &ROM_ONE_BYTE[16..]);
+    test_assert_error!(chip16_one_byte, &ROM_ONE_BYTE[..]);
 
     #[cfg_attr(rustfmt, rustfmt_skip)]
     const ROM_INCOMPLETE_HEADER: &[u8] = &[
         0x43, 0x48, 0x31, 0x36, 0x00, 0x12, 0x00, 0x00,
     ];
 
+    test_assert_error!(chip16_incomplete_header, &ROM_INCOMPLETE_HEADER[..]);
+
     #[cfg_attr(rustfmt, rustfmt_skip)]
     const ROM_NON_ZERO_RESERVED_BYTE: &[u8] = &[
         0x43, 0x48, 0x31, 0x36, 0x01, 0x12, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0xA7, 0x03, 0x1A, 0xC5,
     ];
+
+    test_assert_error!(
+        chip16_non_zero_reserved_byte,
+        &ROM_NON_ZERO_RESERVED_BYTE[..]
+    );
 
     #[cfg_attr(rustfmt, rustfmt_skip)]
     const ROM_START_ADDRESS_LARGER_THAN_SIZE: &[u8] = &[
@@ -247,6 +266,11 @@ mod tests {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     ];
 
+    test_assert_error!(
+        chip16_start_address_larger_than_size,
+        &ROM_START_ADDRESS_LARGER_THAN_SIZE[..]
+    );
+
     #[cfg_attr(rustfmt, rustfmt_skip)]
     const ROM_SIZE_LARGER_THAN_DATA: &[u8] = &[
         0x43, 0x48, 0x31, 0x36, 0x00, 0x12, 0x20, 0x00,
@@ -256,11 +280,16 @@ mod tests {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     ];
 
-    test_chip16_error!(chip16_incomplete_header, ROM_INCOMPLETE_HEADER);
-    test_chip16_error!(chip16_non_zero_reserved_byte, ROM_NON_ZERO_RESERVED_BYTE);
-    test_chip16_error!(
-        chip16_start_address_larger_than_size,
-        ROM_START_ADDRESS_LARGER_THAN_SIZE
-    );
-    test_chip16_error!(chip16_size_larger_than_data, ROM_SIZE_LARGER_THAN_DATA);
+    test_assert_error!(chip16_size_larger_than_data, &ROM_SIZE_LARGER_THAN_DATA[..]);
+
+    #[cfg_attr(rustfmt, rustfmt_skip)]
+    const ROM_SIZE_IS_ZERO: &[u8] = &[
+        0x43, 0x48, 0x31, 0x36, 0x00, 0x12, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0xA7, 0x03, 0x1A, 0xC5,
+
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ];
+
+    test_assert_error!(chip16_size_is_zero, &ROM_SIZE_IS_ZERO[..]);
 }
