@@ -5,8 +5,25 @@ use self::Instruction::*;
 
 struct Opcode(u32);
 
+// fn extract<F, T>(from: F, index: usize) -> T {
+//     let shift = index * mem::size_of<T>() * 8;
+//     let mask = !mem::zeroed<T>() << shift;
+//     ((from & mask) >> shift) as T
+// }
+
 #[cfg_attr(rustfmt, rustfmt_skip)]
 impl Opcode {
+    // macro_rules! attribute {
+    //     ($name:ident, $result:ident) => {
+    //         #[inline]
+    //         fn $ident(&self) -> $result {
+    //             $result
+    //         }
+    //     }
+    // }
+
+    // attribute!(hhll, u16, 0);
+
     // Words.
     // hhll = 00 00 HH LL
     #[inline] fn hhll(&self) -> u16 { (self.0 & 0xFFFF) as u16 }
