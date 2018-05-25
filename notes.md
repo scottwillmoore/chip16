@@ -10,6 +10,12 @@ https://play.rust-lang.org/?gist=b0838deb612fa1ca298ba01bc00ceaee&version=stable
 A way of defining CPU execution for multiple versions.
 https://play.rust-lang.org/?gist=8817e7dbcde8160bbf6f953f98ff6199&version=stable&mode=debug
 
+Using macros to extract u8, u16, etc from larger primitives.
+https://play.rust-lang.org/?gist=22d1949a9b80d81567c023a2451c00a4&version=stable&mode=debug
+
+Using generics to extract u8, u16 from a u32 type. Jesus, it is a little intense!
+https://play.rust-lang.org/?gist=3bfc165ff3bc1fb1cd0ad9502c35c57c&version=nightly&mode=debug
+
 TASKS.
 --------------------
 
