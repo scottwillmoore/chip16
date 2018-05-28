@@ -15,6 +15,7 @@ https://play.rust-lang.org/?gist=22d1949a9b80d81567c023a2451c00a4&version=stable
 
 Using generics to extract u8, u16 from a u32 type. Jesus, it is a little intense!
 https://play.rust-lang.org/?gist=3bfc165ff3bc1fb1cd0ad9502c35c57c&version=nightly&mode=debug
+https://play.rust-lang.org/?gist=ac281d21a1fcdbd5b9a29c5fbe4a7d36&version=nightly&mode=debug
 
 TASKS.
 --------------------
