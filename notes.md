@@ -1,3 +1,12 @@
+PLAN.
+--------------------
+
+Choose an extremely small subset of the instructions and implement them.
+Then choose a really basic rom (maze, pong, etc) and implement all instructions needed for that rom.
+Write tests for the instructions as you go.
+Ensure emulator works for these roms, including graphics, etc.
+Slowly expand to include the entire set of instructions.
+
 RESEARCH.
 --------------------
 
@@ -16,6 +25,49 @@ https://play.rust-lang.org/?gist=22d1949a9b80d81567c023a2451c00a4&version=stable
 Using generics to extract u8, u16 from a u32 type. Jesus, it is a little intense!
 https://play.rust-lang.org/?gist=3bfc165ff3bc1fb1cd0ad9502c35c57c&version=nightly&mode=debug
 https://play.rust-lang.org/?gist=ac281d21a1fcdbd5b9a29c5fbe4a7d36&version=nightly&mode=debug
+
+This could be a better architecture for encoding, decode, assembling, disassembling instructions.
+Note. Could this be made more generic, without having to manually implement each instruction?
+Eg. When assembling instructions, we will have to be smarter...
+https://play.rust-lang.org/?gist=090c7c9b1b32261797da030ea932c58e&version=stable&mode=debug
+
+Structure and naming convetions used for CPU instructions.
+`enum Operation` or `enum Opcode` or `enum Kind`.
+Determined by the upper byte of the instruction. What does this instruction do.
+`enum Format` or `enum Arguments`.
+Based on the opcode, we can determine the format of the arguments.
+````rust
+enum Operation {
+    ADD,
+    JMP,
+}
+
+enum Format {
+    RR,
+    I,
+}
+
+struct Instruction {
+    operation: Operation,
+    format: Format,
+    data: u32,
+}
+
+struct Instruction(u32);
+
+impl Instruction {
+    fn operation(&self) -> Operation {}
+    fn format(&self) -> Format {}
+
+    ...
+
+    // Is there a safer way to wrap these functions.
+    // E.g. Encapsulate them in the Format enum?
+    fn hhll(&self) -> u16 {}
+    fn x(&self) -> u8 {}
+}
+````
+Also... Take into account the closures can often be optimized away...
 
 TASKS.
 --------------------
