@@ -1,6 +1,8 @@
 PLAN.
 --------------------
 
+Fuck all the research. Just KISS and finish the project!
+
 Choose an extremely small subset of the instructions and implement them.
 Then choose a really basic rom (maze, pong, etc) and implement all instructions needed for that rom.
 Write tests for the instructions as you go.
