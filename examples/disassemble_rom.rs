@@ -15,12 +15,12 @@ fn main() {
     let mut reader = &rom.content[start_address..];
     let mut address = start_address;
 
-    while let Ok(opcode) = reader.read_u32::<LittleEndian>() {
-        if let Ok(instruction) = Instruction::decode(opcode) {
-            println!("{:04x} {}", address, instruction.disassemble());
-        } else {
-            println!("{:04x}", address);
-        }
+    while let Ok(data) = reader.read_u32::<LittleEndian>() {
+        // if let Ok(instruction) = Instruction::new(data) {
+        //     println!("{:04x} {:?}", address, instruction.kind());
+        // } else {
+        //     println!("{:04x}", address);
+        // }
         address += 4;
     }
 }

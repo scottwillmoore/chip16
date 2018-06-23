@@ -17,7 +17,7 @@ mod instruction;
 pub use instruction::{Condition, Instruction};
 
 mod memory;
-pub use memory::{Memory, Read, Write};
+pub use memory::{Load, Memory, Store, VideoMemory};
 
 mod registers;
 pub use registers::Registers;
