@@ -2,8 +2,10 @@ extern crate byteorder;
 extern crate crc;
 #[macro_use]
 extern crate failure;
+extern crate rand;
 
 mod cpu;
+mod flags;
 mod instruction;
 mod memory;
 mod register;

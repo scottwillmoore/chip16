@@ -115,7 +115,7 @@ macro_rules! extract_argument {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Instruction(u32);
+pub struct Instruction(pub u32);
 
 impl Instruction {
     pub fn new(data: u32) -> Instruction {
@@ -215,10 +215,6 @@ impl Instruction {
             0x0 => Some(Condition::Z),
             _ => None,
         }
-    }
-
-    pub fn data(&self) -> u32 {
-        self.0
     }
 
     // HH LL 00 00
