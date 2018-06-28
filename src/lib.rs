@@ -1,26 +1,14 @@
 extern crate byteorder;
-
 extern crate crc;
-
 #[macro_use]
 extern crate failure;
 
-extern crate rand;
-
 mod cpu;
-pub use cpu::Cpu;
-
-mod flags;
-pub use flags::Flags;
-
 mod instruction;
-pub use instruction::{Condition, Instruction};
-
 mod memory;
-pub use memory::{Load, Memory, Store, VideoMemory};
-
-mod registers;
-pub use registers::Registers;
-
+mod register;
 mod rom;
-pub use rom::Rom;
+
+pub use cpu::Cpu;
+pub use instruction::{Condition, Instruction, Operation};
+pub use rom::{Rom, RomFormat, Version};

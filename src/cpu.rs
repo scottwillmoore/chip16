@@ -1,74 +1,69 @@
-use failure::Error;
-
-use flags::Flags;
 use instruction::{Condition, Instruction, Operation};
-use memory::{Load, Memory, Store, VideoMemory};
-use registers::Registers;
-use rom::Rom;
+use memory::{Memory, VideoMemory};
+use register::{Register, RegisterFile};
 
-use self::Condition::*;
-use self::Operation::*;
-
-#[derive(Default)]
 pub struct Cpu {
     memory: Memory,
-    registers: Registers,
-    flags: Flags,
+    video_memory: VideoMemory,
+    registers: RegisterFile,
+
     program_counter: u16,
     stack_pointer: u16,
-    video_memory: VideoMemory,
-    background: u8,
-    sprite_height: u8,
+    flags: u8,
+
+    background_color: u8,
     sprite_width: u8,
-    flip_horizontal: bool,
-    flip_vertical: bool,
+    sprite_height: u8,
+    vertical_flip: bool,
+    horizontal_flip: bool,
 }
 
 impl Cpu {
-    pub fn new(rom: &Rom) -> Cpu {
-        let mut memory = Memory::new();
-        memory.store(0usize, &rom.content);
-
+    pub fn new() -> Cpu {
         Cpu {
-            memory,
-            ..Default::default()
+            memory: Memory::new(),
+            video_memory: VideoMemory::new(),
+            registers: RegisterFile::new(),
+
+            program_counter: 0,
+            stack_pointer: 0,
+            flags: 0,
+
+            background_color: 0,
+            sprite_width: 0,
+            sprite_height: 0,
+            vertical_flip: false,
+            horizontal_flip: false,
         }
     }
 
-    pub fn step(&mut self) -> Result<(), Error> {
-        let instruction = self.fetch();
+    pub fn step(&mut self) {
+        let data = self.memory.read_u32(self.program_counter);
+        let instruction = Instruction::new(data);
 
-        // TODO: Use a checked add when incrementing the program counter.
-        self.program_counter += 4;
+        self.program_counter.checked_add(4).unwrap();
 
-        self.execute(instruction)
+        self.execute(instruction);
     }
 
-    fn fetch(&self) -> Instruction {
-        let data = self.memory.load(self.program_counter);
-        Instruction::new(data)
-    }
-
-    fn execute(&mut self, instruction: Instruction) -> Result<(), Error> {
-        let operation = instruction.operation()?;
-        // println!("{:?} {:?}", instruction, operation);
+    pub fn execute(&mut self, instruction: Instruction) {
+        let operation = instruction.decode_operation().unwrap();
 
         match operation {
-            NOP => self.op_nop(),
-            JMPI => self.op_jmpi(&instruction),
-            LDIR => self.op_ldir(&instruction),
-        };
-
-        Ok(())
+            NOP => self.nop(),
+            CLS => self.cls(),
+        }
     }
 
-    fn op_nop(&mut self) {}
+    fn nop(&mut self) {}
 
-    fn op_jmpi(&mut self, instruction: &Instruction) {
-        self.program_counter = instruction.hhll();
+    fn cls(&mut self) {
+        self.background_color = 0;
+        self.video_memory.reset();
     }
 
-    fn op_ldir(&mut self, instruction: &Instruction) {
-        self.registers[instruction.x()] = instruction.hhll();
+    fn ldir(&mut self, instruction: Instruction) {
+        let register = self.registers.get_mut(instruction.x());
+        *register = instruction.hhll();
     }
 }
