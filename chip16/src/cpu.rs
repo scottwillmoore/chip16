@@ -1,23 +1,17 @@
 use flags::Flags;
+use graphics::Graphics;
 use instruction::{Condition, Instruction, Operation};
-use memory::{Memory, VideoMemory};
+use memory::Memory;
 use rand::{thread_rng, Rng, ThreadRng};
 use register::{Register, RegisterFile};
 
 pub struct Cpu {
-    memory: Memory,
-    video_memory: VideoMemory,
-    registers: RegisterFile,
-
-    program_counter: u16,
-    stack_pointer: u16,
-    flags: Flags,
-
-    background_color: u8,
-    sprite_width: u8,
-    sprite_height: u8,
-    vertical_flip: bool,
-    horizontal_flip: bool,
+    pub memory: Memory,
+    pub graphics: Graphics,
+    pub registers: RegisterFile,
+    pub program_counter: u16,
+    pub stack_pointer: u16,
+    pub flags: Flags,
 
     wait_vblnk: bool,
 
@@ -28,18 +22,11 @@ impl Cpu {
     pub fn new() -> Cpu {
         Cpu {
             memory: Memory::new(),
-            video_memory: VideoMemory::new(),
+            graphics: Graphics::new(),
             registers: RegisterFile::new(),
-
             program_counter: 0,
             stack_pointer: 0,
             flags: Flags::new(),
-
-            background_color: 0,
-            sprite_width: 0,
-            sprite_height: 0,
-            vertical_flip: false,
-            horizontal_flip: false,
 
             wait_vblnk: false,
 
@@ -92,8 +79,7 @@ impl Cpu {
     fn nop(&mut self, instruction: Instruction) {}
 
     fn cls(&mut self, instruction: Instruction) {
-        self.background_color = 0;
-        self.video_memory.reset();
+        self.graphics.clear();
     }
 
     fn vblnk(&mut self, instruction: Instruction) {
@@ -104,11 +90,15 @@ impl Cpu {
     fn bgc(&mut self, instruction: Instruction) {}
 
     fn spr(&mut self, instruction: Instruction) {
-        self.sprite_width = instruction.ll();
-        self.sprite_height = instruction.hh();
+        self.graphics.sprite_width = instruction.ll();
+        self.graphics.sprite_height = instruction.hh();
     }
 
-    fn drwi(&mut self, instruction: Instruction) {}
+    fn drwi(&mut self, instruction: Instruction) {
+        // let sprite_data = self.memory.0c
+        // self.graphics.draw(instruction.x(), instruction.y(), )
+    }
+
     fn drwr(&mut self, instruction: Instruction) {}
 
     fn rnd(&mut self, instruction: Instruction) {

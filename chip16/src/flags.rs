@@ -16,7 +16,7 @@ impl Flags {
         }
     }
 
-    // NOTE: This is not an cpu operation, but it is used by addi, addr2 and addr3.
+    // NOTE: This is NOT an cpu operation, but it is used by addi, addr2 and addr3.
     pub fn add(&mut self, a: u16, b: u16) -> u16 {
         let (_, carry) = u16::overflowing_add(a, b);
         let (signed_result, overflow) = i16::overflowing_add(a as i16, b as i16);

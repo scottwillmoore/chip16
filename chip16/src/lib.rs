@@ -6,6 +6,7 @@ extern crate rand;
 
 mod cpu;
 mod flags;
+mod graphics;
 mod instruction;
 mod memory;
 mod register;

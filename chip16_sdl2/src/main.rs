@@ -17,12 +17,13 @@ fn main() {
     let cpu = Cpu::new();
     // cpu.load(rom);
 
-    run();
+    run(cpu);
 }
 
-fn run() {
+fn run(mut cpu: Cpu) {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
+
     let window = video_subsystem
         .window("chip16_sdl2", 800, 600)
         .position_centered()
@@ -30,11 +31,15 @@ fn run() {
         .unwrap();
 
     let mut canvas = window.into_canvas().build().unwrap();
+
+    let texture_creator = canvas.texture_creator();
+    // let texture = texture_creator.
+
     canvas.set_draw_color(Color::RGB(255, 0, 0));
     canvas.clear();
     canvas.present();
-    let mut event_pump = sdl_context.event_pump().unwrap();
 
+    let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -47,5 +52,4 @@ fn run() {
             }
         }
     }
-    ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
 }
