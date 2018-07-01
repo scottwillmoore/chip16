@@ -1,3 +1,3 @@
 /target
 **/*.rs.bk
-*.dll
+/chip16_sdl2/*.dll
